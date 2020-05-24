@@ -19,6 +19,6 @@
 所有数据都会存在数据库里，不出意外的话是SQLite，然后也可以导出成json。
 
 我个人会在另一个项目里使用 [Gatsby.js](https://www.gatsbyjs.org/) 用这些爬到的数据生成 self-hosted 豆瓣，托管在 GitHub Pages 上。
-当然啦，Archive.org会是我的另一个备份。
+当然啦， [Archive.org](http://archive.org) 会是我的另一个备份。
 
-欢迎大家交流 self-hosting everything
+欢迎大家交流 self-hosting everything 的经验。

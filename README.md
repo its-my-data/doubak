@@ -1,6 +1,7 @@
 # Doubak
 
 [![GitHub Action CI](https://github.com/its-my-data/doubak/workflows/CI/badge.svg?branch=master)](https://github.com/its-my-data/doubak/actions?query=workflow%3ACI)
+[![GitHub Action CI](https://github.com/its-my-data/doubak/workflows/Release/badge.svg?branch=master)](https://github.com/its-my-data/doubak/actions?query=workflow%3ARelease)
 
 豆瓣 (Douban.com) 备份工具命令行版，备份完整页面镜像，Golang实现。
 

@@ -9,7 +9,12 @@
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
+temp/
 *.out
+
+# bazel outputs
+/bazel-*
+.ijwb/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/

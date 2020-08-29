@@ -22,17 +22,17 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
-    - name: Install Bazel
+    - name: Install bazelisk
       run: |
-        wget https://github.com/bazelbuild/bazel/releases/download/3.4.1/bazel_3.4.1-linux-x86_64.deb
-        wget https://github.com/bazelbuild/bazel/releases/download/3.4.1/bazel_3.4.1-linux-x86_64.deb.sha256
-        sha256sum -c bazel_3.4.1-linux-x86_64.deb.sha256
-        sudo dpkg -i bazel_3.4.1-linux-x86_64.deb
+        curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.6.1/bazelisk-linux-amd64"
+        mkdir -p "${GITHUB_WORKSPACE}/bin/"
+        mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
+        chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
         
     - name: Build
       run:
-        bazel build :doubak
+        ${GITHUB_WORKSPACE}/bin/bazel build :doubak
 
     - name: Test
       run:
-        bazel test //...
+        ${GITHUB_WORKSPACE}/bin/bazel test //...

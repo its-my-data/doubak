@@ -252,6 +252,9 @@ def go_dependencies():
         importpath = "golang.org/x/tools",
         sum = "h1:mSUCVIwDx4hfXJfWsOPfdzEHxzb2Xjl6BQ8YgPnazQA=",
         version = "v0.0.0-20190606124116-d0a3d012864b",
+        build_extra_args = [
+            "-exclude=cmd/fiximports/testdata",
+        ],
     )
     go_repository(
         name = "org_golang_x_xerrors",

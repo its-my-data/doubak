@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/its-my-data/doubak/proto";
+
+// Category defines the supported categories.
+// Full list supported by Douban are:
+// - 书籍 book
+// - 电影 movie
+// - 音乐 music
+// - 游戏 game
+// - 移动应用 app
+// - 评论 review
+// - 小组 group (not supported)
+// - 日记 note (not supported)
+// - 图片 album (not supported)
+// - 小站 site (not supported)
+// - 同城活动 activity (not supported)
+// - 舞台剧 drama (not supported)
+// - 豆品 thing (not supported)
+enum Category {
+    book = 0;
+    movie = 1;
+    music = 2;
+    game = 3;
+    app = 4;
+    review = 5;
+}

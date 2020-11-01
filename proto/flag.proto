@@ -11,4 +11,22 @@ enum Flag {
 
     // Tasks to run.
     tasks = 1;
+
+    // Categories to run on.
+    categories = 2;
+
+    // Output path/directory.
+    output_dir = 3;
+
+    // Continue running or starting over with overriding existing files.
+    continue = 4;
+
+    // Proxy used to send each request via.
+    proxy = 5;
+
+    // Max number of retries.
+    max_retry = 6;
+
+    // Min time between any two requets.
+    req_delay = 7;
 }

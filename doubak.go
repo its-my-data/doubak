@@ -5,35 +5,39 @@ import (
 	"fmt"
 	"github.com/gocolly/colly/v2"
 	"github.com/its-my-data/doubak/collector"
-	"github.com/its-my-data/doubak/proto"
+	p "github.com/its-my-data/doubak/proto"
 	"math"
 	"time"
 )
 
 // Defining flags.
-var userName = flag.String("user", "", "The Douban user name. e.g. mewcatcher")
-var tasksToRun = flag.String("tasks", "collect, parse, publish",
+var userName = flag.String(p.Flag_user.String(), "",
+	"The Douban user name. e.g. mewcatcher")
+var tasksToRun = flag.String(p.Flag_tasks.String(),
+	p.ConcatProtoEnum(p.Task_name, ", "),
 	"Tasks to run (order doesn't matter). Can be one/more of the following: "+
-		"collect, parse, publish.")
-var targetCategories = flag.String("categories", "",
+		p.ConcatProtoEnum(p.Task_name, ", ")+".")
+var targetCategories = flag.String(p.Flag_categories.String(),
+	p.ConcatProtoEnum(p.Category_name, ", "),
 	"A comma separated content types list to crawl. Default is all. "+
-		"Supported types are: book, movie, music, game, app, review.")
-var outputDir = flag.String("output_dir", "./output", "The output path.")
-var continueRun = flag.Bool("continue", true,
+		"Supported types are: "+p.ConcatProtoEnum(p.Category_name, ", ")+".")
+var outputDir = flag.String(p.Flag_output_dir.String(), "./output",
+	"The output path.")
+var continueRun = flag.Bool(p.Flag_continue.String(), true,
 	"Continue or restart with override.")
-var proxy = flag.String("proxy", "", "Proxy to use when crawling.")
-var numRetry = flag.Uint64("max_retry", math.MaxUint64,
+var proxy = flag.String(p.Flag_proxy.String(), "",
+	"Proxy to use when crawling.")
+var numRetry = flag.Uint64(p.Flag_max_retry.String(), math.MaxUint64,
 	"The number of retries when errors encountered.")
 var defaultRequestDelay, _ = time.ParseDuration("100ms")
-var requestDelay = flag.Duration("req_delay", defaultRequestDelay,
-	"Delay betwee two requests, used to control QPS. This may be replaced by "+
-		"a QPS flag when proxy pool and parallel requests are added.")
+var requestDelay = flag.Duration(p.Flag_req_delay.String(), defaultRequestDelay,
+	"Min time between any two requests, used to reduce server load. This may "+
+		"be replaced by a QPS flag when proxy pool and parallel requests are implemented.")
 
 func main() {
 	flag.Parse()
 
 	collector.Collect()
-	fmt.Println(proto.Flag_user.String() + proto.ConcatProtoEnum(nil, ""))
 
 	c := colly.NewCollector()
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {

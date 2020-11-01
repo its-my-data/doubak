@@ -33,9 +33,10 @@ jobs:
         chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
         
     - name: Build
-      run:
-        ${GITHUB_WORKSPACE}/bin/bazel build :doubak
+      run: ${GITHUB_WORKSPACE}/bin/bazel build :doubak
+
+    - name: Test go build compatability
+      run: go build
 
     - name: Test
-      run:
-        ${GITHUB_WORKSPACE}/bin/bazel test //...
+      run: ${GITHUB_WORKSPACE}/bin/bazel test //...

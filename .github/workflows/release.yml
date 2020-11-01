@@ -1,10 +1,10 @@
+name: Release
+
 on:
   push:
     # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-
-name: Release
 
 jobs:
   build:
@@ -13,6 +13,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Install protoc, protoc-gen-go
+        run: sudo apt install protobuf-compiler golang-goprotobuf-dev
 
       - name: Install bazelisk
         run: |

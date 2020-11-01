@@ -10,9 +10,8 @@ go_library(
     importpath = "github.com/its-my-data/doubak",
     visibility = ["//visibility:private"],
     deps = [
-        "//collector",
         "//proto",
-        "@com_github_gocolly_colly_v2//:colly",
+        "//task",
     ],
 )
 

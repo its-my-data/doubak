@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "task",
+    srcs = [
+        "collector.go",
+        "task.go",
+    ],
+    importpath = "github.com/its-my-data/doubak/task",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proto",
+        "@com_github_gocolly_colly_v2//:colly",
+    ],
+)

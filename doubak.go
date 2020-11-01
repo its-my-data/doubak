@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
 	"flag"
-	"fmt"
-	"github.com/gocolly/colly/v2"
-	"github.com/its-my-data/doubak/collector"
 	p "github.com/its-my-data/doubak/proto"
+	"github.com/its-my-data/doubak/task"
+	"log"
 	"math"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -34,17 +36,79 @@ var requestDelay = flag.Duration(p.Flag_req_delay.String(), defaultRequestDelay,
 	"Min time between any two requests, used to reduce server load. This may "+
 		"be replaced by a QPS flag when proxy pool and parallel requests are implemented.")
 
+func validateFlags() (tasks []string, categories []string, err error) {
+	spaceRegex := regexp.MustCompile(`\s`)
+
+	// Validate task list (order matters).
+	strippedTasks := spaceRegex.ReplaceAllString(*tasksToRun, "")
+	tasks = strings.Split(strippedTasks, ",")
+	for _, t := range tasks {
+		if _, ok := p.Task_value[t]; !ok {
+			err = errors.New("unknown task name: " + t)
+			return
+		}
+	}
+
+	// Validate category list (order doesn't matter).
+	strippedCategories := spaceRegex.ReplaceAllString(*targetCategories, "")
+	categories = strings.Split(strippedCategories, ",")
+	for _, c := range categories {
+		if _, ok := p.Category_value[c]; !ok {
+			err = errors.New("unknown category name: " + c)
+			return
+		}
+	}
+
+	return
+}
+
 func main() {
 	flag.Parse()
 
-	collector.Collect()
+	// Precheck flags that need preprosessing.
+	log.Print("Validating flags... ")
+	tasks, categories, parseErr := validateFlags()
+	if parseErr != nil {
+		log.Print("FAILED")
+		log.Fatal(parseErr)
+	} else {
+		log.Print("PASS")
+	}
 
-	c := colly.NewCollector()
-	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-		fmt.Println("Found ULR: ", e.Attr("href"))
-	})
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL)
-	})
-	c.Visit("http://douban.com/")
+	// Create selected tasks.
+	taskMap := map[string]task.BaseInterface{}
+	for _, t := range tasks {
+		var taskImpl task.BaseInterface
+		switch t {
+		case p.Task_collect.String():
+			taskImpl = task.NewCollector(categories)
+
+			// TODO: add other tasks.
+			// case p.Task_parse:
+			// case p.Task_publish:
+		}
+		taskMap[t] = taskImpl
+	}
+
+	// Run the specific tasks' prechecks first.
+	for taskName, t := range taskMap {
+		log.Printf("Prechecking \"%s\"... ", taskName)
+		if err := t.Precheck(); err != nil {
+			log.Print("FAILED")
+			log.Fatal(err)
+		} else {
+			log.Print("PASS")
+		}
+	}
+
+	// Execute the tasks in input order.
+	for _, taskName := range tasks {
+		log.Printf("Running task \"%s\"... ", taskName)
+		if err := taskMap[taskName].Execute(); err != nil {
+			log.Printf("Task \"%s\" execution failed", taskName)
+			log.Fatal(err)
+		} else {
+			log.Printf("Task \"%s\" passed", taskName)
+		}
+	}
 }

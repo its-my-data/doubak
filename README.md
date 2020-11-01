@@ -34,3 +34,42 @@ One more thing, 我就特别需要标记为“不想看”的功能。
 当然啦， [Archive.org](http://archive.org) 会是我的另一个备份。
 
 欢迎大家交流 self-hosting everything 的经验。
+
+## How to compile?
+
+### Using Bazel (recommended)
+
+1. Install [Bazel](https://docs.bazel.build/versions/master/install-ubuntu.html) or [Bazelisk](https://github.com/bazelbuild/bazelisk/releases).
+
+2. Install protoc and golang-goprotobuf-dev. Ubuntu for example:
+
+    ```shell
+    $ sudo apt install protobuf-compiler golang-goprotobuf-dev
+    ```
+
+3. Compile.
+
+    ```shell
+    $ bazel build :doubak
+
+    # Or if you are using Bazelisk.
+    $ bazelisk build :doubak
+    ```
+### Manually
+
+1. If you want to compile from proto directly,
+install protoc and golang-goprotobuf-dev. Ubuntu for example:
+
+    ```shell
+    $ sudo apt install protobuf-compiler golang-goprotobuf-dev
+    ```
+
+2. Compile:
+
+    ```shell
+    # If you didn't install protoc, just skip this step.
+    $ ./compile_protos.sh
+
+    # Using legacy go build.
+    $ go build
+    ```

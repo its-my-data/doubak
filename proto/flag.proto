@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/its-my-data/doubak/proto";
+
+// Flag defines the names of all runtime flags.
+enum Flag {
+    // The user name.
+    user = 0;
+
+    // Tasks to run.
+    tasks = 1;
+}

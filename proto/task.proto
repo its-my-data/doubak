@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/its-my-data/doubak/proto";
+
+// Task defines the specific tasks the program does.
+enum Task {
+    // Collecting web pages in raw format.
+    collect = 0;
+
+    // Parse raw web pages into structural data.
+    parse = 1;
+
+    // Publish parsed data into web pages.
+    publish = 2;
+}

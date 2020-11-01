@@ -9,7 +9,11 @@ go_library(
     srcs = ["doubak.go"],
     importpath = "github.com/its-my-data/doubak",
     visibility = ["//visibility:private"],
-    deps = ["@com_github_gocolly_colly_v2//:colly"],
+    deps = [
+        "//collector",
+        "//proto",
+        "@com_github_gocolly_colly_v2//:colly",
+    ],
 )
 
 go_binary(

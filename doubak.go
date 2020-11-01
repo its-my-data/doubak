@@ -4,15 +4,17 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gocolly/colly/v2"
+	"github.com/its-my-data/doubak/collector"
+	"github.com/its-my-data/doubak/proto"
 	"math"
 	"time"
 )
 
 // Defining flags.
 var userName = flag.String("user", "", "The Douban user name. e.g. mewcatcher")
-var tasksToRun = flag.String("tasks", "collect, analyse, publish",
+var tasksToRun = flag.String("tasks", "collect, parse, publish",
 	"Tasks to run (order doesn't matter). Can be one/more of the following: "+
-		"collect, analyse, publish.")
+		"collect, parse, publish.")
 var targetCategories = flag.String("categories", "",
 	"A comma separated content types list to crawl. Default is all. "+
 		"Supported types are: book, movie, music, game, app, review.")
@@ -29,6 +31,9 @@ var requestDelay = flag.Duration("req_delay", defaultRequestDelay,
 
 func main() {
 	flag.Parse()
+
+	collector.Collect()
+	fmt.Println(proto.Flag_user.String() + proto.ConcatProtoEnum(nil, ""))
 
 	c := colly.NewCollector()
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {

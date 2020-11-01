@@ -112,8 +112,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_google_go_cmp",
         importpath = "github.com/google/go-cmp",
-        sum = "h1:xsAVV57WRhGj6kEIi8ReJzQlHHqcBYCElAvkovg3B/4=",
-        version = "v0.4.0",
+        sum = "h1:/QaMHBdZ26BB3SSst0Iwl10Epc+xhTquomWX0oZEB6w=",
+        version = "v0.5.0",
     )
     go_repository(
         name = "com_github_jawher_mow_cli",
@@ -196,8 +196,8 @@ def go_dependencies():
     go_repository(
         name = "org_golang_google_protobuf",
         importpath = "google.golang.org/protobuf",
-        sum = "h1:UhZDfRO8JRQru4/+LlLE0BRKGF8L+PICnvYZmx/fEGA=",
-        version = "v1.24.0",
+        sum = "h1:Ejskq+SyPohKW+1uil0JJMtmHCgJPJ/qWTxr8qp+R4c=",
+        version = "v1.25.0",
     )
     go_repository(
         name = "org_golang_x_crypto",
@@ -249,12 +249,12 @@ def go_dependencies():
     )
     go_repository(
         name = "org_golang_x_tools",
-        importpath = "golang.org/x/tools",
-        sum = "h1:mSUCVIwDx4hfXJfWsOPfdzEHxzb2Xjl6BQ8YgPnazQA=",
-        version = "v0.0.0-20190606124116-d0a3d012864b",
         build_extra_args = [
             "-exclude=cmd/fiximports/testdata",
         ],
+        importpath = "golang.org/x/tools",
+        sum = "h1:mSUCVIwDx4hfXJfWsOPfdzEHxzb2Xjl6BQ8YgPnazQA=",
+        version = "v0.0.0-20190606124116-d0a3d012864b",
     )
     go_repository(
         name = "org_golang_x_xerrors",

@@ -82,10 +82,10 @@ func main() {
 		switch t {
 		case p.Task_collect.String():
 			taskImpl = task.NewCollector(categories)
-
-			// TODO: add other tasks.
-			// case p.Task_parse:
-			// case p.Task_publish:
+		case p.Task_parse.String():
+			taskImpl = task.NewParser(categories)
+		case p.Task_publish.String():
+			taskImpl = task.NewPublisher(categories)
 		}
 		taskMap[t] = taskImpl
 	}

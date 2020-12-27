@@ -16,7 +16,7 @@ type Collector struct {
 // NewCollector returns a new collector task and initialise it.
 func NewCollector(categories []string) *Collector {
 	return &Collector{
-		user:       flag.Lookup(p.Flag_categories.String()).Value.(flag.Getter).Get().(string),
+		user:       flag.Lookup(p.Flag_user.String()).Value.(flag.Getter).Get().(string),
 		categories: categories,
 	}
 }

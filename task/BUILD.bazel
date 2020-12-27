@@ -4,6 +4,8 @@ go_library(
     name = "task",
     srcs = [
         "collector.go",
+        "parser.go",
+        "publisher.go",
         "task.go",
     ],
     importpath = "github.com/its-my-data/doubak/task",

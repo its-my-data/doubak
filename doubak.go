@@ -109,7 +109,7 @@ func main() {
 			log.Printf("Task \"%s\" execution failed", taskName)
 			log.Fatal(err)
 		} else {
-			log.Printf("Task \"%s\" passed", taskName)
+			log.Printf("Task \"%s\" competed", taskName)
 		}
 	}
 }

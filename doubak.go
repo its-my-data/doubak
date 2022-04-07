@@ -3,13 +3,14 @@ package main
 import (
 	"errors"
 	"flag"
-	p "github.com/its-my-data/doubak/proto"
-	"github.com/its-my-data/doubak/task"
 	"log"
 	"math"
 	"regexp"
 	"strings"
 	"time"
+
+	p "github.com/its-my-data/doubak/proto"
+	"github.com/its-my-data/doubak/task"
 )
 
 // Defining flags.

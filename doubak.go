@@ -3,13 +3,14 @@ package main
 import (
 	"errors"
 	"flag"
-	p "github.com/its-my-data/doubak/proto"
-	"github.com/its-my-data/doubak/task"
 	"log"
 	"math"
 	"regexp"
 	"strings"
 	"time"
+
+	p "github.com/its-my-data/doubak/proto"
+	"github.com/its-my-data/doubak/task"
 )
 
 // Defining flags.
@@ -84,6 +85,7 @@ func main() {
 			taskImpl = task.NewCollector(categories)
 
 			// TODO: add other tasks.
+			// Currently has to run like: $ bazel run :doubak -- --tasks collect
 			// case p.Task_parse:
 			// case p.Task_publish:
 		}

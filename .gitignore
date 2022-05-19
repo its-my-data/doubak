@@ -6,6 +6,9 @@
 *.so
 doubak
 
+# Github Codespace
+oryxBuildBinary
+
 # Test binary, built with `go test -c`
 *.test
 

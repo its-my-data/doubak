@@ -76,9 +76,7 @@ func init() {
 	proto.RegisterEnum("proto.Flag", Flag_name, Flag_value)
 }
 
-func init() {
-	proto.RegisterFile("proto/flag.proto", fileDescriptor_840b304d78fa0728)
-}
+func init() { proto.RegisterFile("proto/flag.proto", fileDescriptor_840b304d78fa0728) }
 
 var fileDescriptor_840b304d78fa0728 = []byte{
 	// 181 bytes of a gzipped FileDescriptorProto

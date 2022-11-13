@@ -76,9 +76,7 @@ func init() {
 	proto.RegisterEnum("proto.Category", Category_name, Category_value)
 }
 
-func init() {
-	proto.RegisterFile("proto/category.proto", fileDescriptor_1bfb247fa9b1cc73)
-}
+func init() { proto.RegisterFile("proto/category.proto", fileDescriptor_1bfb247fa9b1cc73) }
 
 var fileDescriptor_1bfb247fa9b1cc73 = []byte{
 	// 152 bytes of a gzipped FileDescriptorProto

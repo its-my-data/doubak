@@ -56,9 +56,7 @@ func init() {
 	proto.RegisterEnum("proto.Task", Task_name, Task_value)
 }
 
-func init() {
-	proto.RegisterFile("proto/task.proto", fileDescriptor_5de11d747d3f16e6)
-}
+func init() { proto.RegisterFile("proto/task.proto", fileDescriptor_5de11d747d3f16e6) }
 
 var fileDescriptor_5de11d747d3f16e6 = []byte{
 	// 126 bytes of a gzipped FileDescriptorProto

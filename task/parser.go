@@ -21,7 +21,7 @@ func NewParser(categories []string) *Parser {
 
 // Precheck validates the flags.
 func (task *Parser) Precheck() error {
-	// TODO: check user existance, etc.
+	// TODO: check user existence, etc.
 	return nil
 }
 

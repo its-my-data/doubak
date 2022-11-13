@@ -21,7 +21,7 @@ func NewPublisher(categories []string) *Publisher {
 
 // Precheck validates the flags.
 func (task *Publisher) Precheck() error {
-	// TODO: check user existance, etc.
+	// TODO: check user existence, etc.
 	return nil
 }
 

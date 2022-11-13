@@ -66,7 +66,7 @@ func validateFlags() (tasks []string, categories []string, err error) {
 func main() {
 	flag.Parse()
 
-	// Precheck flags that need preprosessing.
+	// Precheck flags that need preprocessing.
 	log.Print("Validating flags... ")
 	tasks, categories, parseErr := validateFlags()
 	if parseErr != nil {
@@ -82,7 +82,7 @@ func main() {
 		var taskImpl task.BaseInterface
 		switch t {
 		case p.Task_collect.String():
-			taskImpl = task.NewCollector(categories)
+			taskImpl = task.NewCollector(userName, categories)
 		case p.Task_parse.String():
 			taskImpl = task.NewParser(categories)
 		case p.Task_publish.String():

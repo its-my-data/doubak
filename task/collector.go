@@ -10,6 +10,7 @@ import (
 	"github.com/its-my-data/doubak/util"
 	"log"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -18,9 +19,12 @@ import (
 // TODO: use a separate library for URLs.
 
 const DoubanURL = "https://www.douban.com/"
+const MovieURL = "https://movie.douban.com/"
 const PeopleURL = DoubanURL + "people/"
+const MoviePeopleURL = MovieURL + "people/"
 
 const startingPage = 1
+const startingItemId = 0
 
 var timePrefix = time.Now().Local().Format("20060102.1504")
 
@@ -70,13 +74,12 @@ func (task *Collector) Execute() error {
 	for _, c := range task.categories {
 		switch c {
 		case proto.Category_broadcast.String():
-			// TODO
-			//task.crawlBroadcastLists()
+			task.crawlBroadcastLists()
 			task.crawlBroadcastDetail()
 		case proto.Category_book.String():
 			task.crawlBookLists()
 		case proto.Category_movie.String():
-			task.crawlMovieLists()
+			task.crawlMovieListDispatcher()
 		case proto.Category_game.String():
 			task.crawlGameLists()
 		default:
@@ -181,9 +184,90 @@ func (task *Collector) crawlBookLists() error {
 	return errors.New("update the implementation")
 }
 
-func (task *Collector) crawlMovieLists() error {
+func (task *Collector) crawlMovieListDispatcher() error {
+	// The movie entry (https://movie.douban.com/people/<user_name>/) contains the following parts:
+	// - Watched movies.
+	// - To-watch movies.
+	// - Watching movies.
+	// - Favorite actors. (Not supported.)
+	// - Movie Q&A. (Not supported.)
+
+	// Movie list starts with item ID (which is 0). Each page has 15 items.
+	// https://movie.douban.com/people/mewcatcher/collect?start=<ID>&sort=time&rating=all&filter=all&mode=grid
+	nWatched := 0
+	nToWatch := 0
+	nWatching := 0
+	c := util.NewColly()
+	c.OnHTML("div#db-movie-mine > h2", func(e *colly.HTMLElement) {
+		secText := e.Text
+		re := regexp.MustCompile("[0-9]+")
+		nParsed, _ := strconv.Atoi(re.FindString(secText))
+
+		switch {
+		case strings.Contains(secText, "看过"):
+			nWatched = nParsed
+			log.Println("Found watched movies:", nWatched)
+		case strings.Contains(secText, "想看"):
+			nToWatch = nParsed
+			log.Println("Found to-watch movies:", nToWatch)
+		case strings.Contains(secText, "在看"):
+			nWatching = nParsed
+			log.Println("Found watching movies:", nWatching)
+		default:
+			log.Println("Ignoring:", util.MergeSpaces(&secText))
+		}
+	})
+	c.Visit(MoviePeopleURL + task.user + "/")
+
+	if err := task.crawlMovieLists(nWatched, "watched", "collect"); err != nil {
+		return err
+	}
+	if err := task.crawlMovieLists(nToWatch, "towatch", "wish"); err != nil {
+		return err
+	}
+	if err := task.crawlMovieLists(nWatching, "watching", "do"); err != nil {
+		return err
+	}
+
+	// TODO: collect each movie details.
+
 	// TODO: update the implementation.
 	return errors.New("update the implementation")
+}
+
+func (task *Collector) crawlMovieLists(totalItems int, tag string, urlAction string) error {
+	// Each grid page has 15 movies.
+	const pageStep = 15
+
+	startingItem := startingItemId
+	c := util.NewColly()
+
+	c.OnResponse(func(r *colly.Response) {
+		fileName := fmt.Sprintf("%s_%s_%s_l%d-%d.html", timePrefix, proto.Category_movie, tag, startingItem, startingItem+pageStep)
+		if err := task.saveResponse(r, fileName); err != nil {
+			log.Println(err.Error())
+		}
+
+		body := string(r.Body)
+		util.FailIfNeedLogin(&body)
+
+		movieCount := strings.Count(body, "class=\"item\"")
+		log.Println("Found", movieCount, "movies.")
+		if movieCount != pageStep {
+			log.Printf("Potential last movie page reached with count %d (in file %s).\n", movieCount, fileName)
+		}
+	})
+
+	for ; startingItem < totalItems; startingItem += pageStep {
+		// TODO: implement retry strategy and incremental strategy.
+		time.Sleep(util.RequestInterval)
+		url := fmt.Sprintf("https://movie.douban.com/people/mewcatcher/%s?start=%d&sort=time&rating=all&filter=all&mode=grid", urlAction, startingItem)
+		err := c.Visit(url)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	return nil
 }
 
 func (task *Collector) crawlGameLists() error {

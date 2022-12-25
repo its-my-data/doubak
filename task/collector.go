@@ -18,6 +18,10 @@ import (
 const DoubanURL = "https://www.douban.com/"
 const PeopleURL = DoubanURL + "people/"
 
+const startingPage = 1
+
+var timePrefix = time.Now().Local().Format("20060102.1504")
+
 // Collector contains the information used by the collector.
 type Collector struct {
 	user       string
@@ -79,15 +83,13 @@ func (task *Collector) Execute() error {
 }
 
 func (task *Collector) crawlBroadcasts() error {
-	// TODO: need to be global or class-private.
-	// These can be hacked to resume a progress.
-	timePrefix := time.Now().Local().Format("20060102.1504")
-	page := 1
-
+	page := startingPage
 	q := util.NewQueue()
 	c := util.NewColly()
+
 	c.OnResponse(func(r *colly.Response) {
-		if err := task.saveResponse(r, proto.Category_broadcast, timePrefix, page); err != nil {
+		fileName := fmt.Sprintf("%s_%s_p%d.html", timePrefix, proto.Category_broadcast, page)
+		if err := task.saveResponse(r, fileName); err != nil {
 			log.Println(err.Error())
 		}
 
@@ -104,7 +106,7 @@ func (task *Collector) crawlBroadcasts() error {
 			url := PeopleURL + task.user + "/statuses?p=" + strconv.Itoa(page)
 			q.AddURL(url)
 			log.Printf("Added URL: %s. (Followed by sleeping.)\n", url)
-			time.Sleep(3 * time.Second)
+			time.Sleep(util.RequestInterval)
 		} else {
 			log.Printf("All done with broadcast count %d (in page %d).\n", broadcastCount, page)
 		}
@@ -133,10 +135,8 @@ func (task *Collector) crawlGames() error {
 
 // TODO: implement more crawlers.
 
-func (task *Collector) saveResponse(r *colly.Response, category proto.Category, timePrefix string, page int) error {
-	fileName := fmt.Sprintf("%s_%s_p%d.html", timePrefix, category.String(), page)
+func (task *Collector) saveResponse(r *colly.Response, fileName string) error {
 	fullPath := filepath.Join(task.outputDir, fileName)
-
 	if err := r.Save(fullPath); err != nil {
 		return err
 	}

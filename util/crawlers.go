@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+const RequestTimeout = 5 * time.Minute
+const RequestInterval = 3 * time.Second
+
 // NewQueue creates the Colly Request Queue based on my needs.
 func NewQueue() *queue.Queue {
 	q, err := queue.New(
@@ -64,21 +67,21 @@ func NewColly() *colly.Collector {
 		r.Headers.Set("Host", "https://www.douban.com/")
 	})
 
-	c.SetRequestTimeout(5 * time.Minute)
+	c.SetRequestTimeout(RequestTimeout)
 	c.WithTransport(&http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
-			Timeout:   5 * time.Minute,
-			KeepAlive: 5 * time.Minute,
+			Timeout:   RequestTimeout,
+			KeepAlive: RequestTimeout,
 		}).DialContext,
 		MaxIdleConns:          100,
-		IdleConnTimeout:       5 * time.Minute,
-		TLSHandshakeTimeout:   5 * time.Minute,
-		ExpectContinueTimeout: 5 * time.Minute,
+		IdleConnTimeout:       RequestTimeout,
+		TLSHandshakeTimeout:   RequestTimeout,
+		ExpectContinueTimeout: RequestTimeout,
 	})
 	c.Limit(&colly.LimitRule{
 		Parallelism: 1,
-		Delay:       5 * time.Second,
+		Delay:       RequestInterval,
 	})
 
 	return c

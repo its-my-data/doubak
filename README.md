@@ -55,6 +55,14 @@ One more thing, 我就特别需要标记为“不想看”的功能。
     # Or if you are using Bazelisk.
     $ bazelisk build :doubak
     ```
+4. Run.
+
+Note that not using `bazel/bazelisk run` to avoid generating files into temp folders.
+
+```shell
+$ bazel-bin/doubak_/doubak --user=<user_name> --categories=<categories>
+```
+
 ### Manually
 
 1. If you want to compile from proto directly,
@@ -73,3 +81,9 @@ install protoc and golang-goprotobuf-dev. Ubuntu for example:
     # Using legacy go build.
     $ go build
     ```
+
+3. Run.
+
+```shell
+$ ./doubak --user=<user_name> --categories=<categories>
+```

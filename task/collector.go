@@ -68,13 +68,14 @@ func (task *Collector) Execute() error {
 	for _, c := range task.categories {
 		switch c {
 		case proto.Category_broadcast.String():
-			task.crawlBroadcasts()
+			//task.crawlBroadcastLists()
+			task.crawlBroadcastDetail()
 		case proto.Category_book.String():
-			task.crawlBooks()
+			task.crawlBookLists()
 		case proto.Category_movie.String():
-			task.crawlMovies()
+			task.crawlMovieLists()
 		case proto.Category_game.String():
-			task.crawlGames()
+			task.crawlGameLists()
 		default:
 			return errors.New("Category not implemented " + c)
 		}
@@ -82,7 +83,8 @@ func (task *Collector) Execute() error {
 	return nil
 }
 
-func (task *Collector) crawlBroadcasts() error {
+// crawlBroadcastLists downloads the list of broadcasts.
+func (task *Collector) crawlBroadcastLists() error {
 	page := startingPage
 	q := util.NewQueue()
 	c := util.NewColly()
@@ -118,17 +120,31 @@ func (task *Collector) crawlBroadcasts() error {
 	return q.Run(c)
 }
 
-func (task *Collector) crawlBooks() error {
+// crawlBroadcastDetail downloads the detail of each broadcast by reading all downloaded broadcast lists.
+func (task *Collector) crawlBroadcastDetail() error {
+	fileNamePattern := fmt.Sprintf("*_%s_p*.html", proto.Category_broadcast)
+	files := util.GetFilePathListWithPattern(task.outputDir, fileNamePattern)
+	for _, fn := range files {
+		log.Println("Found file:", fn)
+		// TODO: finish this with goquery.
+	}
+
+	// TODO: handle each type of broadcasts.
+
+	return errors.New("update the implementation")
+}
+
+func (task *Collector) crawlBookLists() error {
 	// TODO: update the implementation.
 	return errors.New("update the implementation")
 }
 
-func (task *Collector) crawlMovies() error {
+func (task *Collector) crawlMovieLists() error {
 	// TODO: update the implementation.
 	return errors.New("update the implementation")
 }
 
-func (task *Collector) crawlGames() error {
+func (task *Collector) crawlGameLists() error {
 	// TODO: update the implementation.
 	return errors.New("update the implementation")
 }

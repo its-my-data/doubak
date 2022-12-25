@@ -6,6 +6,7 @@ import (
 	"github.com/its-my-data/doubak/proto"
 	"github.com/mengzhuo/cookiestxt"
 	"html"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -35,6 +36,31 @@ func GetPathWithCreationWithBase(base, subdirs string) (string, error) {
 	// Recursively create sub-directories.
 	newPath := filepath.Join(base, subdirs)
 	return newPath, os.MkdirAll(newPath, os.ModePerm)
+}
+
+// ReadEntireFile reads the entire file to a string.
+func ReadEntireFile(fullPath string) string {
+	b, err := os.ReadFile(fullPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(b)
+}
+
+// GetFilePathListWithPattern returns the full paths for files matching the pattern in the base path.
+func GetFilePathListWithPattern(basePath, fileNamePattern string) []string {
+	var files []string
+	filepath.WalkDir(basePath, func(s string, d fs.DirEntry, e error) error {
+		if e != nil {
+			return e
+		}
+		if matched, _ := filepath.Match(fileNamePattern, d.Name()); matched {
+			files = append(files, s)
+		}
+		return nil
+	})
+	log.Println("Found", len(files), "matched files with pattern:", fileNamePattern)
+	return files
 }
 
 // LoadCookiesFile loads the external cookies file.

@@ -45,15 +45,7 @@ func (task *Collector) Precheck() error {
 
 	// Check user existence.
 	exists := true
-	cu := colly.NewCollector()
-	// TODO: remove.
-	//cu.OnResponse(func(r *colly.Response) {
-	//	log.Println(string(r.Body))
-	//})
-	//cu.OnHTML("li", func(e *colly.HTMLElement) {
-	//	log.Println(e.Text)
-	//})
-	cu.SetRequestTimeout(5 * time.Minute)
+	cu := util.NewColly()
 	cu.OnError(func(r *colly.Response, err error) {
 		exists = false
 		t := string(r.Body)

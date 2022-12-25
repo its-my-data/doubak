@@ -18,8 +18,8 @@ enum Flag {
     // Output path/directory.
     output_dir = 3;
 
-    // Continue running or starting over with overriding existing files.
-    continue = 4;
+    // Incremental running or starting over with overriding existing files.
+    incremental = 4;
 
     // Proxy used to send each request via.
     proxy = 5;
@@ -27,6 +27,6 @@ enum Flag {
     // Max number of retries.
     max_retry = 6;
 
-    // Min time between any two requets.
+    // Min time between any two requests.
     req_delay = 7;
 }

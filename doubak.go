@@ -26,8 +26,8 @@ var targetCategories = flag.String(p.Flag_categories.String(),
 		"Supported types are: "+p.ConcatProtoEnum(p.Category_name, ", ")+".")
 var outputDir = flag.String(p.Flag_output_dir.String(), "./output",
 	"The output path.")
-var continueRun = flag.Bool(p.Flag_continue.String(), true,
-	"Continue or restart with override.")
+var incrementalRun = flag.Bool(p.Flag_incremental.String(), true,
+	"Incremental or restart with override.")
 var proxy = flag.String(p.Flag_proxy.String(), "",
 	"Proxy to use when crawling.")
 var numRetry = flag.Uint64(p.Flag_max_retry.String(), math.MaxUint64,

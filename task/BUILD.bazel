@@ -12,6 +12,8 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//proto",
+        "//util",
         "@com_github_gocolly_colly_v2//:colly",
+        "@com_github_gocolly_colly_v2//queue",
     ],
 )

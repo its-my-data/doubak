@@ -2,8 +2,16 @@ package task
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/queue"
+	"github.com/its-my-data/doubak/proto"
+	"github.com/its-my-data/doubak/util"
 	"log"
+	"net"
+	"net/http"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -17,6 +25,7 @@ const PeopleURL = DoubanURL + "people/"
 type Collector struct {
 	user       string
 	categories []string
+	outputDir  string
 }
 
 // NewCollector returns a new collector task and initialise it.
@@ -29,6 +38,14 @@ func NewCollector(userName *string, categories []string) *Collector {
 
 // Precheck validates the flags.
 func (task *Collector) Precheck() error {
+	// Initialize the top most directory for Collector.
+	if path, err := util.GetPathWithCreation(util.CollectorPathPrefix); err != nil {
+		return err
+	} else {
+		task.outputDir = path
+	}
+	log.Println("New output path saved:", task.outputDir)
+
 	// Check user existence.
 	exists := true
 	cu := colly.NewCollector()
@@ -63,20 +80,101 @@ func (task *Collector) Precheck() error {
 
 // Execute starts the collection.
 func (task *Collector) Execute() error {
-	// TODO: update the implementation.
-	c := colly.NewCollector()
-	// TODO: remove.
-	//c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-	//	log.Println("Found ULR: ", e.Attr("href"))
-	//})
-	//c.OnRequest(func(r *colly.Request) {
-	//	log.Println("Visiting", r.URL)
-	//})
+	for _, c := range task.categories {
+		switch c {
+		case proto.Category_broadcast.String():
+			task.crawlBroadcasts()
+		case proto.Category_book.String():
+			task.crawlBooks()
+		case proto.Category_movie.String():
+			task.crawlMovies()
+		case proto.Category_game.String():
+			task.crawlGames()
+		default:
+			return errors.New("Category not implemented " + c)
+		}
+	}
+	return nil
+}
+
+func (task *Collector) crawlBroadcasts() error {
+	page := 1
+
+	q, _ := queue.New(
+		1,                                           // Number of consumer threads
+		&queue.InMemoryQueueStorage{MaxSize: 10000}, // Use default queue storage
+	)
+
+	c := colly.NewCollector(
+		colly.MaxDepth(1),
+		colly.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"),
+	)
+	c.OnResponse(func(r *colly.Response) {
+		body := string(r.Body)
+		if strings.Contains(body, "<title>登录豆瓣</title>") {
+			log.Fatal("Cannot continue, need to log in first")
+		}
+
+		fileName := fmt.Sprintf("%s_broadcast_p%d.html", time.Now().Local().Format("20060102"), page)
+		fullPath := filepath.Join(task.outputDir, fileName)
+
+		if err := r.Save(fullPath); err != nil {
+			log.Println(err.Error())
+		}
+		log.Println("Saved", fullPath)
+
+		// Prepare for the next request.
+		broadcastCount := strings.Count(body, "\"status-item\"")
+		if broadcastCount == 20 {
+			page++
+			url := PeopleURL + task.user + "/statuses?p=" + strconv.Itoa(page)
+			q.AddURL(url)
+			log.Printf("Added URL: %s.\n", url)
+		} else {
+			log.Printf("All done with count %d in page %d.\n", broadcastCount, page)
+		}
+	})
+	c.OnRequest(func(r *colly.Request) {
+		log.Println("Visiting", r.URL)
+	})
+
+	// TODO: move the creator to a separate file so that we can set session and user-agent.
+	c.SetRequestTimeout(5 * time.Minute)
+	c.WithTransport(&http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   5 * time.Minute,
+			KeepAlive: 5 * time.Minute,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       5 * time.Minute,
+		TLSHandshakeTimeout:   5 * time.Minute,
+		ExpectContinueTimeout: 5 * time.Minute,
+	})
 	c.Limit(&colly.LimitRule{
 		Parallelism: 1,
 		Delay:       5 * time.Second,
 	})
+
 	// TODO: need a retry queue (either Requests, or go routines).
-	c.Visit("https://douban.com/")
-	return nil
+	q.AddURL(PeopleURL + task.user + "/statuses?p=" + strconv.Itoa(page))
+
+	return q.Run(c)
 }
+
+func (task *Collector) crawlBooks() error {
+	// TODO: update the implementation.
+	return errors.New("update the implementation")
+}
+
+func (task *Collector) crawlMovies() error {
+	// TODO: update the implementation.
+	return errors.New("update the implementation")
+}
+
+func (task *Collector) crawlGames() error {
+	// TODO: update the implementation.
+	return errors.New("update the implementation")
+}
+
+// TODO: implement more crawlers.

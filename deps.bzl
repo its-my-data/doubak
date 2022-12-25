@@ -22,8 +22,8 @@ def go_dependencies():
     go_repository(
         name = "com_github_antchfx_xmlquery",
         importpath = "github.com/antchfx/xmlquery",
-        sum = "h1:6TMGpdjpO/P8VhjnaYPXuqT3qyJ/VsqoyNTmJzNBTQ4=",
-        version = "v1.3.12",
+        sum = "h1:wqhTv2BN5MzYg9rnPVtZb3IWP8kW6WV/ebAY0FCTI7Y=",
+        version = "v1.3.13",
     )
     go_repository(
         name = "com_github_antchfx_xpath",
@@ -128,6 +128,13 @@ def go_dependencies():
         version = "v1.2.4",
     )
     go_repository(
+        name = "com_github_mengzhuo_cookiestxt",
+        importpath = "github.com/mengzhuo/cookiestxt",
+        sum = "h1:fdVqvdnxNAtZq5VJp5KuMv1xImmgs/m9bG5zNCy53M4=",
+        version = "v1.0.3",
+    )
+
+    go_repository(
         name = "com_github_pmezard_go_difflib",
         importpath = "github.com/pmezard/go-difflib",
         sum = "h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=",
@@ -227,8 +234,8 @@ def go_dependencies():
     go_repository(
         name = "org_golang_x_net",
         importpath = "golang.org/x/net",
-        sum = "h1:sZfSu1wtKLGlWI4ZZayP0ck9Y73K1ynO6gqzTdBVdPU=",
-        version = "v0.2.0",
+        sum = "h1:Q5QPcMlvfxFTAPV0+07Xz/MpK9NTXu2VDUuy0FeMfaU=",
+        version = "v0.4.0",
     )
     go_repository(
         name = "org_golang_x_oauth2",
@@ -245,21 +252,21 @@ def go_dependencies():
     go_repository(
         name = "org_golang_x_sys",
         importpath = "golang.org/x/sys",
-        sum = "h1:ljd4t30dBnAvMZaQCevtY0xLLD0A+bRZXbgLMLU1F/A=",
-        version = "v0.2.0",
+        sum = "h1:w8ZOecv6NaNa/zC8944JTU3vz4u6Lagfk4RPQxv92NQ=",
+        version = "v0.3.0",
     )
     go_repository(
         name = "org_golang_x_term",
         importpath = "golang.org/x/term",
-        sum = "h1:z85xZCsEl7bi/KwbNADeBYoOP0++7W1ipu+aGnpwzRM=",
-        version = "v0.2.0",
+        sum = "h1:qoo4akIqOcDME5bhc/NgxUdovd6BSS2uMsVjB56q1xI=",
+        version = "v0.3.0",
     )
 
     go_repository(
         name = "org_golang_x_text",
         importpath = "golang.org/x/text",
-        sum = "h1:BrVqGRd7+k1DiOgtnFvAkoQEWQvBc25ouMJM6429SFg=",
-        version = "v0.4.0",
+        sum = "h1:OLmvp0KP+FVG99Ct/qFiL/Fhk4zp4QQnZ7b2U+5piUM=",
+        version = "v0.5.0",
     )
     go_repository(
         name = "org_golang_x_tools",

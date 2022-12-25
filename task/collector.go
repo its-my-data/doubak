@@ -2,6 +2,7 @@ package task
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
@@ -98,6 +99,8 @@ func (task *Collector) Execute() error {
 }
 
 func (task *Collector) crawlBroadcasts() error {
+	// TODO: need to be global.
+	timePrefix := time.Now().Local().Format("20060102.1504")
 	page := 1
 
 	q, _ := queue.New(
@@ -110,12 +113,9 @@ func (task *Collector) crawlBroadcasts() error {
 		colly.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"),
 	)
 	c.OnResponse(func(r *colly.Response) {
-		body := string(r.Body)
-		if strings.Contains(body, "<title>登录豆瓣</title>") {
-			log.Fatal("Cannot continue, need to log in first")
-		}
+		log.Println("Response header:", r.Headers)
 
-		fileName := fmt.Sprintf("%s_broadcast_p%d.html", time.Now().Local().Format("20060102"), page)
+		fileName := fmt.Sprintf("%s_broadcast_p%d.html", timePrefix, page)
 		fullPath := filepath.Join(task.outputDir, fileName)
 
 		if err := r.Save(fullPath); err != nil {
@@ -123,22 +123,42 @@ func (task *Collector) crawlBroadcasts() error {
 		}
 		log.Println("Saved", fullPath)
 
+		body := string(r.Body)
+		if strings.Contains(body, "<title>登录豆瓣</title>") {
+			log.Fatal("Cannot continue, need to log in first")
+		}
+
 		// Prepare for the next request.
 		broadcastCount := strings.Count(body, "\"status-item\"")
 		if broadcastCount == 20 {
 			page++
 			url := PeopleURL + task.user + "/statuses?p=" + strconv.Itoa(page)
 			q.AddURL(url)
-			log.Printf("Added URL: %s.\n", url)
+			log.Printf("Added URL: %s. (Followed by sleeping.)\n", url)
+			time.Sleep(3 * time.Second)
 		} else {
-			log.Printf("All done with count %d in page %d.\n", broadcastCount, page)
+			log.Printf("All done with broadcast count %d (in page %d).\n", broadcastCount, page)
 		}
 	})
 	c.OnRequest(func(r *colly.Request) {
 		log.Println("Visiting", r.URL)
+
+		// Hacking the cookies.
+		cookiesFlag := flag.Lookup(proto.Flag_cookies_file.String())
+		if cookiesFlag != nil && len(cookiesFlag.Value.String()) != 0 {
+			cookies, err := util.LoadCookiesFileToString(cookiesFlag.Value.String())
+			if err != nil {
+				log.Println(err)
+			}
+			r.Headers.Set("Cookie", cookies)
+		}
+
+		r.Headers.Set("Referer", "https://www.douban.com/")
+		r.Headers.Set("Host", "https://www.douban.com/")
 	})
 
 	// TODO: move the creator to a separate file so that we can set session and user-agent.
+	// TODO: set cookies.
 	c.SetRequestTimeout(5 * time.Minute)
 	c.WithTransport(&http.Transport{
 		Proxy: http.ProxyFromEnvironment,

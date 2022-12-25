@@ -24,8 +24,10 @@ var targetCategories = flag.String(p.Flag_categories.String(),
 	p.ConcatProtoEnum(p.Category_name, ", "),
 	"A comma separated content types list to crawl. Default is all. "+
 		"Supported types are: "+p.ConcatProtoEnum(p.Category_name, ", ")+".")
-var outputDir = flag.String(p.Flag_output_dir.String(), "./output",
-	"The output path.")
+var _ = flag.String(p.Flag_cookies_file.String(), "",
+	"The input file path to the cookies.txt.")
+var _ = flag.String(p.Flag_output_dir.String(), "./output",
+	"The base output path.")
 var incrementalRun = flag.Bool(p.Flag_incremental.String(), true,
 	"Incremental or restart with override.")
 var proxy = flag.String(p.Flag_proxy.String(), "",

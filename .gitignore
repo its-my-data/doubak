@@ -18,6 +18,7 @@ oryxBuildBinary
 *.out
 output/
 temp/
+cookies.txt
 
 # bazel outputs
 .ijwb/

@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "crawlers.go",
         "files.go",
+        "strings.go",
     ],
     importpath = "github.com/its-my-data/doubak/util",
     visibility = ["//visibility:public"],

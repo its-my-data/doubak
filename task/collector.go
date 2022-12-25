@@ -100,8 +100,20 @@ func (task *Collector) Execute() error {
 
 func (task *Collector) crawlBroadcasts() error {
 	// TODO: need to be global.
+	// These can be hacked to resume a progress.
 	timePrefix := time.Now().Local().Format("20060102.1504")
 	page := 1
+
+	// Calculate the cookies only once here.
+	cookies := ""
+
+	if f := flag.Lookup(proto.Flag_cookies_file.String()); f != nil && len(f.Value.String()) != 0 {
+		c, err := util.LoadCookiesFileToString(f.Value.String())
+		if err != nil {
+			log.Println(err)
+		}
+		cookies = c
+	}
 
 	q, _ := queue.New(
 		1,                                           // Number of consumer threads
@@ -113,8 +125,6 @@ func (task *Collector) crawlBroadcasts() error {
 		colly.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"),
 	)
 	c.OnResponse(func(r *colly.Response) {
-		log.Println("Response header:", r.Headers)
-
 		fileName := fmt.Sprintf("%s_broadcast_p%d.html", timePrefix, page)
 		fullPath := filepath.Join(task.outputDir, fileName)
 
@@ -130,7 +140,8 @@ func (task *Collector) crawlBroadcasts() error {
 
 		// Prepare for the next request.
 		broadcastCount := strings.Count(body, "\"status-item\"")
-		if broadcastCount == 20 {
+		log.Println("Found", broadcastCount, "broadcasts/status.")
+		if broadcastCount != 0 {
 			page++
 			url := PeopleURL + task.user + "/statuses?p=" + strconv.Itoa(page)
 			q.AddURL(url)
@@ -144,12 +155,7 @@ func (task *Collector) crawlBroadcasts() error {
 		log.Println("Visiting", r.URL)
 
 		// Hacking the cookies.
-		cookiesFlag := flag.Lookup(proto.Flag_cookies_file.String())
-		if cookiesFlag != nil && len(cookiesFlag.Value.String()) != 0 {
-			cookies, err := util.LoadCookiesFileToString(cookiesFlag.Value.String())
-			if err != nil {
-				log.Println(err)
-			}
+		if len(cookies) != 0 {
 			r.Headers.Set("Cookie", cookies)
 		}
 

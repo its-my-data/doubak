@@ -2,15 +2,11 @@ package task
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"github.com/gocolly/colly/v2"
-	"github.com/gocolly/colly/v2/queue"
 	"github.com/its-my-data/doubak/proto"
 	"github.com/its-my-data/doubak/util"
 	"log"
-	"net"
-	"net/http"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -99,46 +95,24 @@ func (task *Collector) Execute() error {
 }
 
 func (task *Collector) crawlBroadcasts() error {
-	// TODO: need to be global.
+	// TODO: need to be global or class-private.
 	// These can be hacked to resume a progress.
 	timePrefix := time.Now().Local().Format("20060102.1504")
 	page := 1
 
-	// Calculate the cookies only once here.
-	cookies := ""
-
-	if f := flag.Lookup(proto.Flag_cookies_file.String()); f != nil && len(f.Value.String()) != 0 {
-		c, err := util.LoadCookiesFileToString(f.Value.String())
-		if err != nil {
-			log.Println(err)
-		}
-		cookies = c
-	}
-
-	q, _ := queue.New(
-		1,                                           // Number of consumer threads
-		&queue.InMemoryQueueStorage{MaxSize: 10000}, // Use default queue storage
-	)
-
-	c := colly.NewCollector(
-		colly.MaxDepth(1),
-		colly.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"),
-	)
+	q := util.NewQueue()
+	c := util.NewColly()
 	c.OnResponse(func(r *colly.Response) {
-		fileName := fmt.Sprintf("%s_broadcast_p%d.html", timePrefix, page)
-		fullPath := filepath.Join(task.outputDir, fileName)
-
-		if err := r.Save(fullPath); err != nil {
+		if err := task.saveResponse(r, proto.Category_broadcast, timePrefix, page); err != nil {
 			log.Println(err.Error())
 		}
-		log.Println("Saved", fullPath)
 
 		body := string(r.Body)
-		if strings.Contains(body, "<title>登录豆瓣</title>") {
-			log.Fatal("Cannot continue, need to log in first")
-		}
+		util.FailIfNeedLogin(&body)
 
 		// Prepare for the next request.
+		// Note that the number of broadcasts in each page somehow don't equal.
+		// Therefore, I have to get at least an empty status page file.
 		broadcastCount := strings.Count(body, "\"status-item\"")
 		log.Println("Found", broadcastCount, "broadcasts/status.")
 		if broadcastCount != 0 {
@@ -150,36 +124,6 @@ func (task *Collector) crawlBroadcasts() error {
 		} else {
 			log.Printf("All done with broadcast count %d (in page %d).\n", broadcastCount, page)
 		}
-	})
-	c.OnRequest(func(r *colly.Request) {
-		log.Println("Visiting", r.URL)
-
-		// Hacking the cookies.
-		if len(cookies) != 0 {
-			r.Headers.Set("Cookie", cookies)
-		}
-
-		r.Headers.Set("Referer", "https://www.douban.com/")
-		r.Headers.Set("Host", "https://www.douban.com/")
-	})
-
-	// TODO: move the creator to a separate file so that we can set session and user-agent.
-	// TODO: set cookies.
-	c.SetRequestTimeout(5 * time.Minute)
-	c.WithTransport(&http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   5 * time.Minute,
-			KeepAlive: 5 * time.Minute,
-		}).DialContext,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       5 * time.Minute,
-		TLSHandshakeTimeout:   5 * time.Minute,
-		ExpectContinueTimeout: 5 * time.Minute,
-	})
-	c.Limit(&colly.LimitRule{
-		Parallelism: 1,
-		Delay:       5 * time.Second,
 	})
 
 	// TODO: need a retry queue (either Requests, or go routines).
@@ -204,3 +148,14 @@ func (task *Collector) crawlGames() error {
 }
 
 // TODO: implement more crawlers.
+
+func (task *Collector) saveResponse(r *colly.Response, category proto.Category, timePrefix string, page int) error {
+	fileName := fmt.Sprintf("%s_%s_p%d.html", timePrefix, category.String(), page)
+	fullPath := filepath.Join(task.outputDir, fileName)
+
+	if err := r.Save(fullPath); err != nil {
+		return err
+	}
+	log.Println("Saved", fullPath)
+	return nil
+}

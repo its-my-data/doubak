@@ -3,12 +3,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "util",
     srcs = [
+        "crawlers.go",
         "files.go",
     ],
     importpath = "github.com/its-my-data/doubak/util",
     visibility = ["//visibility:public"],
     deps = [
         "//proto",
+        "@com_github_gocolly_colly_v2//:colly",
+        "@com_github_gocolly_colly_v2//queue",
         "@com_github_mengzhuo_cookiestxt//:cookiestxt",
     ],
 )

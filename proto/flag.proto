@@ -5,6 +5,7 @@ package proto;
 option go_package = "github.com/its-my-data/doubak/proto";
 
 // Flag defines the names of all runtime flags.
+// Next: 9
 enum Flag {
     // The user name.
     user = 0;
@@ -17,6 +18,9 @@ enum Flag {
 
     // Output path/directory.
     output_dir = 3;
+
+    // Input file path to cookies.txt.
+    cookies_file = 8;
 
     // Incremental running or starting over with overriding existing files.
     incremental = 4;

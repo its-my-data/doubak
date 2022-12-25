@@ -41,6 +41,17 @@ func NewColly() *colly.Collector {
 		colly.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"),
 	)
 
+	c.OnError(func(r *colly.Response, err error) {
+		t := string(r.Body)
+		if strings.Contains(t, "页面不存在") {
+			// Real user not found.
+		} else {
+			// Usually caused by timeouts, but just in case.
+			log.Println("Request URL:", r.Request.URL, "\nError:", err)
+			log.Println("Unknown error with request body: ", string(r.Body))
+		}
+	})
+
 	c.OnRequest(func(r *colly.Request) {
 		log.Println("Visiting", r.URL)
 

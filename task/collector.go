@@ -48,14 +48,6 @@ func (task *Collector) Precheck() error {
 	cu := util.NewColly()
 	cu.OnError(func(r *colly.Response, err error) {
 		exists = false
-		t := string(r.Body)
-		if strings.Contains(t, "页面不存在") {
-			// Real user not found.
-		} else {
-			// Usually caused by timeouts, but just in case.
-			log.Println("Request URL:", r.Request.URL, "\nError:", err)
-			log.Println("Unknown error with request body: ", string(r.Body))
-		}
 	})
 
 	// Error handled separately.

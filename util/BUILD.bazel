@@ -7,5 +7,8 @@ go_library(
     ],
     importpath = "github.com/its-my-data/doubak/util",
     visibility = ["//visibility:public"],
-    deps = ["//proto"],
+    deps = [
+        "//proto",
+        "@com_github_mengzhuo_cookiestxt//:cookiestxt",
+    ],
 )

@@ -1,8 +1,10 @@
 package task
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 	"github.com/its-my-data/doubak/proto"
 	"github.com/its-my-data/doubak/util"
@@ -68,6 +70,7 @@ func (task *Collector) Execute() error {
 	for _, c := range task.categories {
 		switch c {
 		case proto.Category_broadcast.String():
+			// TODO
 			//task.crawlBroadcastLists()
 			task.crawlBroadcastDetail()
 		case proto.Category_book.String():
@@ -122,11 +125,50 @@ func (task *Collector) crawlBroadcastLists() error {
 
 // crawlBroadcastDetail downloads the detail of each broadcast by reading all downloaded broadcast lists.
 func (task *Collector) crawlBroadcastDetail() error {
+	// Known data types are exhaust types of broadcast items.
+	knownTypes := map[string]int{
+		"game":    0, // A game.
+		"movie":   0, // A movie.
+		"book":    0, // A book.
+		"music":   0, // A music album.
+		"sns":     0, // A micro-post (might with pictures) that "someone made". If it's not made by me, it will have a different user ID in URL like (https://www.douban.com/people/54763828/status/3805173111/).
+		"app":     0, // (Unsupported) An app.
+		"ilmen":   0, // (Unsupported) An item that "I liked" (essentially a picture and a title).
+		"fav":     0, // (Unsupported) A post/diary that "I liked".
+		"olivia":  0, // (Unsupported) A discussion thread that "I participated" (sample: https://movie.douban.com/subject/3243582/discussion/637265942/).
+		"doulist": 0, // (Unsupported) A douban list (sample https://douc.cc/0NnLLT or https://www.douban.com/game/25892303/).
+		"rec":     0, // (Unsupported) A discussion thread that "I recommended" (https://douc.cc/4uYky6 or https://www.douban.com/group/topic/12410327/?_i=2003765TN2GQHs).
+		"board":   0, // (Unsupported) A deprecated type that describes participating a movie pooling event.
+		"":        0, // (Unsupported) A re-share of something.
+	}
+
 	fileNamePattern := fmt.Sprintf("*_%s_p*.html", proto.Category_broadcast)
 	files := util.GetFilePathListWithPattern(task.outputDir, fileNamePattern)
 	for _, fn := range files {
-		log.Println("Found file:", fn)
-		// TODO: finish this with goquery.
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader(util.ReadEntireFile(fn)))
+		if err != nil {
+			log.Println("Error reading", fn, "with message", err)
+		}
+
+		doc.Find("div.status-wrapper > div.status-item").Each(func(_ int, sel *goquery.Selection) {
+			dataType := sel.AttrOr("data-target-type", "unspecified")
+			if _, ok := knownTypes[dataType]; ok {
+				// Do some statistics.
+				knownTypes[dataType]++
+			} else {
+				html, _ := sel.Html()
+				log.Printf("[WARNING] Found broadcast of type \"%s\" in %s\nFull element:\n%s\n", dataType, fn, strings.TrimSpace(html))
+				// For statistical purpose and avoiding log spamming.
+				knownTypes[dataType] = 1
+			}
+		})
+	}
+
+	// Pretty print the statistics.
+	if b, err := json.MarshalIndent(knownTypes, "", "  "); err != nil {
+		log.Fatal("error:", err)
+	} else {
+		log.Println("Statistics:", string(b))
 	}
 
 	// TODO: handle each type of broadcasts.

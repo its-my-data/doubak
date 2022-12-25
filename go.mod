@@ -4,7 +4,6 @@ go 1.17
 
 // Run `go get -u` to update indirect dependencies below.
 require (
-	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/antchfx/htmlquery v1.2.5 // indirect
 	github.com/antchfx/xmlquery v1.3.13 // indirect
@@ -24,4 +23,5 @@ require (
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/golang/protobuf v1.5.2
 	github.com/mengzhuo/cookiestxt v1.0.3
+	github.com/PuerkitoBio/goquery v1.8.0
 )

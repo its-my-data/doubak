@@ -14,5 +14,6 @@ go_library(
         "//proto",
         "//util",
         "@com_github_gocolly_colly_v2//:colly",
+        "@com_github_puerkitobio_goquery//:goquery",
     ],
 )

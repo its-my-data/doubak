@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "util",
+    srcs = [
+        "files.go",
+    ],
+    importpath = "github.com/its-my-data/doubak/util",
+    visibility = ["//visibility:public"],
+    deps = ["//proto"],
+)

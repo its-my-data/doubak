@@ -6,6 +6,7 @@ option go_package = "github.com/its-my-data/doubak/proto";
 
 // Category defines the supported categories.
 // Full list supported by Douban are:
+// - 广播 broadcast (所有的状态更新)
 // - 书籍 book
 // - 电影 movie
 // - 音乐 music
@@ -20,10 +21,11 @@ option go_package = "github.com/its-my-data/doubak/proto";
 // - 舞台剧 drama (not supported)
 // - 豆品 thing (not supported)
 enum Category {
-    book = 0;
-    movie = 1;
-    music = 2;
+    broadcast = 0;
+    book = 1;
+    movie = 2;
     game = 3;
-    app = 4;
-    review = 5;
+    music = 4;
+    app = 5;
+    review = 6;
 }

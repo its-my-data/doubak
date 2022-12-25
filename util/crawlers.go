@@ -81,7 +81,7 @@ func NewColly() *colly.Collector {
 	})
 	c.Limit(&colly.LimitRule{
 		Parallelism: 1,
-		Delay:       RequestInterval,
+		Delay:       RequestInterval, // Note: this doesn't seem to do anything?
 	})
 
 	return c

@@ -81,7 +81,7 @@ func (task *Collector) Execute() error {
 		case proto.Category_movie.String():
 			task.crawlMovieListDispatcher()
 		case proto.Category_game.String():
-			task.crawlGameLists()
+			task.crawlGameListDispatcher()
 		default:
 			return errors.New("Category not implemented " + c)
 		}
@@ -96,6 +96,7 @@ func (task *Collector) crawlBroadcastLists() error {
 	c := util.NewColly()
 
 	c.OnResponse(func(r *colly.Response) {
+		// "p" means page.
 		fileName := fmt.Sprintf("%s_%s_p%d.html", timePrefix, proto.Category_broadcast, page)
 		if err := task.saveResponse(r, fileName); err != nil {
 			log.Println(err.Error())
@@ -176,7 +177,7 @@ func (task *Collector) crawlBroadcastDetail() error {
 
 	// TODO: handle each type of broadcasts.
 
-	return errors.New("update the implementation")
+	return nil
 }
 
 func (task *Collector) crawlBookLists() error {
@@ -230,20 +231,89 @@ func (task *Collector) crawlMovieListDispatcher() error {
 	}
 
 	// TODO: collect each movie details.
-
-	// TODO: update the implementation.
-	return errors.New("update the implementation")
+	return nil
 }
 
 func (task *Collector) crawlMovieLists(totalItems int, tag string, urlAction string) error {
 	// Each grid page has 15 movies.
 	const pageStep = 15
 
+	urlTemplate := fmt.Sprintf("https://movie.douban.com/people/mewcatcher/%s?start=%%d&sort=time&rating=all&filter=all&mode=grid", urlAction)
+	return task.crawlItemLists(proto.Category_movie, totalItems, pageStep, tag, urlTemplate)
+}
+
+func (task *Collector) crawlGameListDispatcher() error {
+	// The game page does not have an entry (https://www.douban.com/people/<user_name>/games?action=<action>).
+	// However, each page contains the following parts:
+	// - To-play games.
+	// - Playing games.
+	// - Played games.
+	// - Liked games. (Not supported due to legacy issue.)
+
+	// Game list starts with item ID (which is 0). Each page has 15 items.
+	// https://www.douban.com/people/mewcatcher/games?action=wish&start=<ID>
+	nToPlay := 0
+	nPlaying := 0
+	nPlayed := 0
+	c := util.NewColly()
+	c.OnHTML("div.article > div.tabs > a", func(e *colly.HTMLElement) {
+		secText := e.Text
+		re := regexp.MustCompile("[0-9]+")
+		nParsed, _ := strconv.Atoi(re.FindString(secText))
+
+		switch {
+		case strings.Contains(secText, "想玩"):
+			nToPlay = nParsed
+			log.Println("Found to-play games:", nToPlay)
+		case strings.Contains(secText, "在玩"):
+			nPlaying = nParsed
+			log.Println("Found playing games:", nPlaying)
+		case strings.Contains(secText, "玩过"):
+			nPlayed = nParsed
+			log.Println("Found played games:", nPlayed)
+		default:
+			log.Println("Ignoring:", util.MergeSpaces(&secText))
+		}
+	})
+	c.Visit(PeopleURL + task.user + "/games")
+
+	if err := task.crawlGameLists(nPlayed, "played", "collect"); err != nil {
+		return err
+	}
+	if err := task.crawlGameLists(nToPlay, "toplay", "wish"); err != nil {
+		return err
+	}
+	if err := task.crawlGameLists(nPlaying, "playing", "do"); err != nil {
+		return err
+	}
+
+	// TODO: collect each game details.
+	return nil
+}
+
+func (task *Collector) crawlGameLists(totalItems int, tag string, urlAction string) error {
+	// Each grid page has 15 games.
+	const pageStep = 15
+
+	urlTemplate := fmt.Sprintf("https://www.douban.com/people/mewcatcher/games?action=%s&start=%%d", urlAction)
+	return task.crawlItemLists(proto.Category_game, totalItems, pageStep, tag, urlTemplate)
+}
+
+// TODO: implement more crawlers.
+
+// crawlItemLists downloads an item list universally.
+func (task *Collector) crawlItemLists(cat proto.Category, totalItems int, pageStep int, tag string, urlTemplate string) error {
+	// Validations.
+	if strings.Count(urlTemplate, "%d") != 1 {
+		return errors.New("URL template should have exact one %d placeholder")
+	}
+
 	startingItem := startingItemId
 	c := util.NewColly()
 
 	c.OnResponse(func(r *colly.Response) {
-		fileName := fmt.Sprintf("%s_%s_%s_l%d-%d.html", timePrefix, proto.Category_movie, tag, startingItem, startingItem+pageStep)
+		// "l" means list.
+		fileName := fmt.Sprintf("%s_%s_%s_l%d-%d.html", timePrefix, cat, tag, startingItem, startingItem+pageStep)
 		if err := task.saveResponse(r, fileName); err != nil {
 			log.Println(err.Error())
 		}
@@ -251,17 +321,18 @@ func (task *Collector) crawlMovieLists(totalItems int, tag string, urlAction str
 		body := string(r.Body)
 		util.FailIfNeedLogin(&body)
 
-		movieCount := strings.Count(body, "class=\"item\"")
-		log.Println("Found", movieCount, "movies.")
-		if movieCount != pageStep {
-			log.Printf("Potential last movie page reached with count %d (in file %s).\n", movieCount, fileName)
+		itemCount := strings.Count(body, task.getItemMatcherPattern(cat))
+		log.Println("Found", itemCount, cat.String()+"(s).")
+		if itemCount != pageStep {
+			log.Printf("Potential last %s page reached with count %d (in file %s).\n", cat, itemCount, fileName)
 		}
 	})
 
 	for ; startingItem < totalItems; startingItem += pageStep {
 		// TODO: implement retry strategy and incremental strategy.
 		time.Sleep(util.RequestInterval)
-		url := fmt.Sprintf("https://movie.douban.com/people/mewcatcher/%s?start=%d&sort=time&rating=all&filter=all&mode=grid", urlAction, startingItem)
+		// Note that URL template should have a "%d" placeholder.
+		url := fmt.Sprintf(urlTemplate, startingItem)
 		err := c.Visit(url)
 		if err != nil {
 			log.Fatal(err)
@@ -270,12 +341,17 @@ func (task *Collector) crawlMovieLists(totalItems int, tag string, urlAction str
 	return nil
 }
 
-func (task *Collector) crawlGameLists() error {
-	// TODO: update the implementation.
-	return errors.New("update the implementation")
+func (task *Collector) getItemMatcherPattern(cat proto.Category) string {
+	// Update counter matcher.
+	counterMatcher := "nothing-to-match"
+	switch cat {
+	case proto.Category_movie:
+		counterMatcher = "class=\"item\""
+	case proto.Category_game:
+		counterMatcher = "class=\"common-item\""
+	}
+	return counterMatcher
 }
-
-// TODO: implement more crawlers.
 
 func (task *Collector) saveResponse(r *colly.Response, fileName string) error {
 	fullPath := filepath.Join(task.outputDir, fileName)

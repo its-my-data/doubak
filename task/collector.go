@@ -55,8 +55,8 @@ func (task *Collector) Precheck() error {
 		return err
 	} else {
 		task.outputDir = path
+		log.Println("New output path saved:", task.outputDir)
 	}
-	log.Println("New output path saved:", task.outputDir)
 
 	// Check user existence.
 	exists := true
@@ -237,7 +237,7 @@ func (task *Collector) crawlBookListDispatcher() error {
 
 func (task *Collector) crawlBookLists(totalItems int, tag string, urlAction string) error {
 	const pageStep = 15
-	urlTemplate := fmt.Sprintf("https://book.douban.com/people/mewcatcher/%s?start=%%d&sort=time&rating=all&filter=all&mode=grid", urlAction)
+	urlTemplate := fmt.Sprintf("https://book.douban.com/people/%s/%s?start=%%d&sort=time&rating=all&filter=all&mode=grid", task.user, urlAction)
 	return task.crawlItemLists(proto.Category_book, totalItems, pageStep, tag, urlTemplate)
 }
 
@@ -292,7 +292,7 @@ func (task *Collector) crawlMovieListDispatcher() error {
 
 func (task *Collector) crawlMovieLists(totalItems int, tag string, urlAction string) error {
 	const pageStep = 15
-	urlTemplate := fmt.Sprintf("https://movie.douban.com/people/mewcatcher/%s?start=%%d&sort=time&rating=all&filter=all&mode=grid", urlAction)
+	urlTemplate := fmt.Sprintf("https://movie.douban.com/people/%s/%s?start=%%d&sort=time&rating=all&filter=all&mode=grid", task.user, urlAction)
 	return task.crawlItemLists(proto.Category_movie, totalItems, pageStep, tag, urlTemplate)
 }
 
@@ -347,7 +347,7 @@ func (task *Collector) crawlGameListDispatcher() error {
 
 func (task *Collector) crawlGameLists(totalItems int, tag string, urlAction string) error {
 	const pageStep = 15
-	urlTemplate := fmt.Sprintf("https://www.douban.com/people/mewcatcher/games?action=%s&start=%%d", urlAction)
+	urlTemplate := fmt.Sprintf("https://www.douban.com/people/%s/games?action=%s&start=%%d", task.user, urlAction)
 	return task.crawlItemLists(proto.Category_game, totalItems, pageStep, tag, urlTemplate)
 }
 
@@ -401,8 +401,7 @@ func (task *Collector) crawlMusicListDispatcher() error {
 
 func (task *Collector) crawlMusicLists(totalItems int, tag string, urlAction string) error {
 	const pageStep = 15
-	// FIXME: user name.
-	urlTemplate := fmt.Sprintf("https://music.douban.com/people/mewcatcher/%s?start=%%d&sort=time&rating=all&filter=all&mode=grid", urlAction)
+	urlTemplate := fmt.Sprintf("https://music.douban.com/people/%s/%s?start=%%d&sort=time&rating=all&filter=all&mode=grid", task.user, urlAction)
 	return task.crawlItemLists(proto.Category_music, totalItems, pageStep, tag, urlTemplate)
 }
 

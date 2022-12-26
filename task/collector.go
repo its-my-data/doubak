@@ -21,9 +21,12 @@ import (
 const DoubanURL = "https://www.douban.com/"
 const MovieURL = "https://movie.douban.com/"
 const BookURL = "https://book.douban.com/"
+const MusicURL = "https://music.douban.com/"
+
 const PeopleURL = DoubanURL + "people/"
 const MoviePeopleURL = MovieURL + "people/"
 const BookPeopleURL = BookURL + "people/"
+const MusicPeopleURL = MusicURL + "people/"
 
 const startingPage = 1
 const startingItemId = 0
@@ -84,6 +87,8 @@ func (task *Collector) Execute() error {
 			task.crawlMovieListDispatcher()
 		case proto.Category_game.String():
 			task.crawlGameListDispatcher()
+		case proto.Category_music.String():
+			task.crawlMusicListDispatcher()
 		default:
 			return errors.New("Category not implemented " + c)
 		}
@@ -346,6 +351,61 @@ func (task *Collector) crawlGameLists(totalItems int, tag string, urlAction stri
 	return task.crawlItemLists(proto.Category_game, totalItems, pageStep, tag, urlTemplate)
 }
 
+func (task *Collector) crawlMusicListDispatcher() error {
+	// The music entry (https://music.douban.com/people/<user_name>/) contains the following parts:
+	// - Listened album.
+	// - To-listen album.
+	// - Listening album.
+	// - Others. (Not supported.)
+
+	// Album music list starts with item ID (which is 0). Each page has 15 items.
+	// https://music.douban.com/people/mewcatcher/collect?start=<ID>&sort=time&rating=all&filter=all&mode=grid
+	nListened := 0
+	nToListen := 0
+	nListening := 0
+	c := util.NewColly()
+	c.OnHTML("div#db-music-mine > h2", func(e *colly.HTMLElement) {
+		secText := e.Text
+		re := regexp.MustCompile("[0-9]+")
+		nParsed, _ := strconv.Atoi(re.FindString(secText))
+
+		switch {
+		case strings.Contains(secText, "在听"):
+			nListening = nParsed
+			log.Println("Found listening album music:", nListening)
+		case strings.Contains(secText, "听过"):
+			nListened = nParsed
+			log.Println("Found listened album music:", nListened)
+		case strings.Contains(secText, "想听"):
+			nToListen = nParsed
+			log.Println("Found to-listen album music:", nToListen)
+		default:
+			log.Println("Ignoring:", util.MergeSpaces(&secText))
+		}
+	})
+	c.Visit(MusicPeopleURL + task.user + "/")
+
+	if err := task.crawlMusicLists(nListened, "listened", "collect"); err != nil {
+		return err
+	}
+	if err := task.crawlMusicLists(nToListen, "tolisten", "wish"); err != nil {
+		return err
+	}
+	if err := task.crawlMusicLists(nListening, "listening", "do"); err != nil {
+		return err
+	}
+
+	// TODO: collect each album details.
+	return nil
+}
+
+func (task *Collector) crawlMusicLists(totalItems int, tag string, urlAction string) error {
+	const pageStep = 15
+	// FIXME: user name.
+	urlTemplate := fmt.Sprintf("https://music.douban.com/people/mewcatcher/%s?start=%%d&sort=time&rating=all&filter=all&mode=grid", urlAction)
+	return task.crawlItemLists(proto.Category_music, totalItems, pageStep, tag, urlTemplate)
+}
+
 // TODO: implement more crawlers.
 
 // crawlItemLists downloads an item list universally.
@@ -393,11 +453,12 @@ func (task *Collector) getItemMatcherPattern(cat proto.Category) string {
 	switch cat {
 	case proto.Category_book:
 		return "class=\"subject-item\""
-	case proto.Category_movie:
+	case proto.Category_movie, proto.Category_music:
 		return "class=\"item\""
 	case proto.Category_game:
 		return "class=\"common-item\""
 	default:
+		log.Fatal("Nothing to match for category", cat)
 		return "!!nothing-to-match!!"
 	}
 }

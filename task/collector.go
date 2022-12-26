@@ -75,6 +75,9 @@ func (task *Collector) Precheck() error {
 }
 
 // Execute starts the collection.
+// Broadcast should be synced regularly as it tracks all other category changes;
+// although, it can still miss something that is not broadcast.
+// In this case, we still want to run the sync on other categories on a less frequent basis.
 func (task *Collector) Execute() error {
 	for _, c := range task.categories {
 		switch c {
@@ -83,12 +86,16 @@ func (task *Collector) Execute() error {
 			task.crawlBroadcastDetail()
 		case proto.Category_book.String():
 			task.crawlBookListDispatcher()
+			// TODO: collect each book details.
 		case proto.Category_movie.String():
 			task.crawlMovieListDispatcher()
+			// TODO: collect each movie details.
 		case proto.Category_game.String():
 			task.crawlGameListDispatcher()
+			// TODO: collect each game details.
 		case proto.Category_music.String():
 			task.crawlMusicListDispatcher()
+			// TODO: collect each album details.
 		default:
 			return errors.New("Category not implemented " + c)
 		}
@@ -230,8 +237,6 @@ func (task *Collector) crawlBookListDispatcher() error {
 	if err := task.crawlBookLists(nReading, "reading", "do"); err != nil {
 		return err
 	}
-
-	// TODO: collect each book details.
 	return nil
 }
 
@@ -285,8 +290,6 @@ func (task *Collector) crawlMovieListDispatcher() error {
 	if err := task.crawlMovieLists(nWatching, "watching", "do"); err != nil {
 		return err
 	}
-
-	// TODO: collect each movie details.
 	return nil
 }
 
@@ -340,8 +343,6 @@ func (task *Collector) crawlGameListDispatcher() error {
 	if err := task.crawlGameLists(nPlaying, "playing", "do"); err != nil {
 		return err
 	}
-
-	// TODO: collect each game details.
 	return nil
 }
 
@@ -394,8 +395,6 @@ func (task *Collector) crawlMusicListDispatcher() error {
 	if err := task.crawlMusicLists(nListening, "listening", "do"); err != nil {
 		return err
 	}
-
-	// TODO: collect each album details.
 	return nil
 }
 

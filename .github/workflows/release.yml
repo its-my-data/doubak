@@ -45,4 +45,4 @@ jobs:
           body: |
             Automatic Release by GitHub Workflow
           token: ${{ secrets.GITHUB_TOKEN }}
-          files: doubak-${{ steps.tagName.outputs.tag }}-linux-amd64
+          files: releases/doubak-${{ steps.tagName.outputs.tag }}-linux-amd64

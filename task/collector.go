@@ -20,8 +20,10 @@ import (
 
 const DoubanURL = "https://www.douban.com/"
 const MovieURL = "https://movie.douban.com/"
+const BookURL = "https://book.douban.com/"
 const PeopleURL = DoubanURL + "people/"
 const MoviePeopleURL = MovieURL + "people/"
+const BookPeopleURL = BookURL + "people/"
 
 const startingPage = 1
 const startingItemId = 0
@@ -77,7 +79,7 @@ func (task *Collector) Execute() error {
 			task.crawlBroadcastLists()
 			task.crawlBroadcastDetail()
 		case proto.Category_book.String():
-			task.crawlBookLists()
+			task.crawlBookListDispatcher()
 		case proto.Category_movie.String():
 			task.crawlMovieListDispatcher()
 		case proto.Category_game.String():
@@ -180,9 +182,58 @@ func (task *Collector) crawlBroadcastDetail() error {
 	return nil
 }
 
-func (task *Collector) crawlBookLists() error {
-	// TODO: update the implementation.
-	return errors.New("update the implementation")
+func (task *Collector) crawlBookListDispatcher() error {
+	// The book entry (https://book.douban.com/people/<user_name>/) contains the following parts:
+	// - Read books.
+	// - To-read books.
+	// - Reading books.
+	// - Others. (Not supported.)
+
+	// Book list starts with item ID (which is 0). Each page has 15 items.
+	// https://book.douban.com/people/mewcatcher/collect?start=<ID>&sort=time&rating=all&filter=all&mode=grid
+	nRead := 0
+	nToRead := 0
+	nReading := 0
+	c := util.NewColly()
+	c.OnHTML("div#db-book-mine > div > h2", func(e *colly.HTMLElement) {
+		secText := e.Text
+		re := regexp.MustCompile("[0-9]+")
+		nParsed, _ := strconv.Atoi(re.FindString(secText))
+
+		switch {
+		case strings.Contains(secText, "在读"):
+			nReading = nParsed
+			log.Println("Found reading books:", nReading)
+		case strings.Contains(secText, "读过"):
+			nRead = nParsed
+			log.Println("Found read books:", nRead)
+		case strings.Contains(secText, "想读"):
+			nToRead = nParsed
+			log.Println("Found to-read books:", nToRead)
+		default:
+			log.Println("Ignoring:", util.MergeSpaces(&secText))
+		}
+	})
+	c.Visit(BookPeopleURL + task.user + "/")
+
+	if err := task.crawlBookLists(nRead, "read", "collect"); err != nil {
+		return err
+	}
+	if err := task.crawlBookLists(nToRead, "toread", "wish"); err != nil {
+		return err
+	}
+	if err := task.crawlBookLists(nReading, "reading", "do"); err != nil {
+		return err
+	}
+
+	// TODO: collect each book details.
+	return nil
+}
+
+func (task *Collector) crawlBookLists(totalItems int, tag string, urlAction string) error {
+	const pageStep = 15
+	urlTemplate := fmt.Sprintf("https://book.douban.com/people/mewcatcher/%s?start=%%d&sort=time&rating=all&filter=all&mode=grid", urlAction)
+	return task.crawlItemLists(proto.Category_book, totalItems, pageStep, tag, urlTemplate)
 }
 
 func (task *Collector) crawlMovieListDispatcher() error {
@@ -235,9 +286,7 @@ func (task *Collector) crawlMovieListDispatcher() error {
 }
 
 func (task *Collector) crawlMovieLists(totalItems int, tag string, urlAction string) error {
-	// Each grid page has 15 movies.
 	const pageStep = 15
-
 	urlTemplate := fmt.Sprintf("https://movie.douban.com/people/mewcatcher/%s?start=%%d&sort=time&rating=all&filter=all&mode=grid", urlAction)
 	return task.crawlItemLists(proto.Category_movie, totalItems, pageStep, tag, urlTemplate)
 }
@@ -292,9 +341,7 @@ func (task *Collector) crawlGameListDispatcher() error {
 }
 
 func (task *Collector) crawlGameLists(totalItems int, tag string, urlAction string) error {
-	// Each grid page has 15 games.
 	const pageStep = 15
-
 	urlTemplate := fmt.Sprintf("https://www.douban.com/people/mewcatcher/games?action=%s&start=%%d", urlAction)
 	return task.crawlItemLists(proto.Category_game, totalItems, pageStep, tag, urlTemplate)
 }
@@ -341,16 +388,18 @@ func (task *Collector) crawlItemLists(cat proto.Category, totalItems int, pageSt
 	return nil
 }
 
+// getItemMatcherPattern returns the string matcher to identify matched item in the page.
 func (task *Collector) getItemMatcherPattern(cat proto.Category) string {
-	// Update counter matcher.
-	counterMatcher := "nothing-to-match"
 	switch cat {
+	case proto.Category_book:
+		return "class=\"subject-item\""
 	case proto.Category_movie:
-		counterMatcher = "class=\"item\""
+		return "class=\"item\""
 	case proto.Category_game:
-		counterMatcher = "class=\"common-item\""
+		return "class=\"common-item\""
+	default:
+		return "!!nothing-to-match!!"
 	}
-	return counterMatcher
 }
 
 func (task *Collector) saveResponse(r *colly.Response, fileName string) error {

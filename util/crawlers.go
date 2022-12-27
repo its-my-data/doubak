@@ -13,7 +13,7 @@ import (
 )
 
 const RequestTimeout = 5 * time.Minute
-const RequestInterval = 3 * time.Second
+const RequestInterval = 1 * time.Second
 
 // NewQueue creates the Colly Request Queue based on my needs.
 // TODO: add a rate limiter.

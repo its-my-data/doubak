@@ -56,6 +56,10 @@ func (task *Collector) Precheck() error {
 	} else {
 		task.outputDir = path
 		log.Println("New output path saved:", task.outputDir)
+
+		// Initialize other directories.
+		p, _ := util.GetPathWithCreation(util.CollectorPathPrefix + util.ItemPathPrefix)
+		log.Println("Created path:", p)
 	}
 
 	// Check user existence.
@@ -78,6 +82,7 @@ func (task *Collector) Precheck() error {
 // Broadcast should be synced regularly as it tracks all other category changes;
 // although, it can still miss something that is not broadcast.
 // In this case, we still want to run the sync on other categories on a less frequent basis.
+// TODO: handle errors.
 func (task *Collector) Execute() error {
 	for _, c := range task.categories {
 		switch c {
@@ -85,8 +90,9 @@ func (task *Collector) Execute() error {
 			task.crawlBroadcastLists()
 			task.crawlBroadcastDetail()
 		case proto.Category_book.String():
-			task.crawlBookListDispatcher()
-			// TODO: collect each book details.
+			// TODO: uncomment this.
+			//task.crawlBookListDispatcher()
+			task.crawlItemDetails(proto.Category_book, "li.subject-item > div.info > h2 > a")
 		case proto.Category_movie.String():
 			task.crawlMovieListDispatcher()
 			// TODO: collect each movie details.
@@ -444,6 +450,60 @@ func (task *Collector) crawlItemLists(cat proto.Category, totalItems int, pageSt
 		}
 	}
 	return nil
+}
+
+func (task *Collector) crawlItemDetails(cat proto.Category, selector string) error {
+	q := util.NewQueue()
+	inputFileNamePattern := fmt.Sprintf("*_%s_*.html", cat)
+	files := util.GetFilePathListWithPattern(task.outputDir, inputFileNamePattern)
+	for _, fn := range files {
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader(util.ReadEntireFile(fn)))
+		if err != nil {
+			log.Println("Error reading", fn, "with message", err)
+		}
+
+		// TODO: handle subject-item missing div.info issue.
+		doc.Find(selector).Each(func(_ int, sel *goquery.Selection) {
+			url, exists := sel.Attr("href")
+			if !exists {
+				log.Fatal("Found item without link", sel.Text())
+			}
+
+			// TODO: handle incremental option to check local file exists.
+			q.AddURL(url)
+		})
+	}
+
+	size, _ := q.Size()
+	log.Println("Detail queue size is:", size)
+
+	count := 1
+	c := util.NewColly()
+	c.OnResponse(func(r *colly.Response) {
+		// Hack around to continue progress.
+		if count < 0 {
+			return
+		}
+
+		// Extract ID from response (using the first occurrence of number string).
+		re := regexp.MustCompile("[0-9]+")
+		id, _ := strconv.Atoi(re.FindString(r.Request.URL.String()))
+
+		fileName := fmt.Sprintf("%s_%s_%d.html", timePrefix, cat, id)
+		if err := task.saveResponse(r, util.ItemPathPrefix+fileName); err != nil {
+			log.Println(err.Error())
+		}
+
+		body := string(r.Body)
+		util.FailIfNeedLogin(&body)
+
+		log.Println("Progress", count, "/", size)
+		count++
+
+		// TODO: replace this with a proper rate limiter.
+		time.Sleep(util.RequestInterval)
+	})
+	return q.Run(c)
 }
 
 // getItemMatcherPattern returns the string matcher to identify matched item in the page.

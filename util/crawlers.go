@@ -16,6 +16,7 @@ const RequestTimeout = 5 * time.Minute
 const RequestInterval = 3 * time.Second
 
 // NewQueue creates the Colly Request Queue based on my needs.
+// TODO: add a rate limiter.
 func NewQueue() *queue.Queue {
 	q, err := queue.New(
 		1,                                           // Number of consumer threads

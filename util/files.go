@@ -15,6 +15,7 @@ import (
 )
 
 const CollectorPathPrefix = "collector/"
+const ItemPathPrefix = "items/"
 
 // GetPathWithCreation returns the concatenated path with output path and have them created in advance.
 func GetPathWithCreation(subdirs string) (string, error) {

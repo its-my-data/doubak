@@ -94,7 +94,7 @@ func (task *Collector) Execute() error {
 			task.crawlItemDetails(proto.Category_book, "li.subject-item > div.info > h2 > a")
 		case proto.Category_movie.String():
 			task.crawlMovieListDispatcher()
-			// TODO: collect each movie details.
+			task.crawlItemDetails(proto.Category_movie, "div.item > div.info > ul > li.title > a:nth-child(1)")
 		case proto.Category_game.String():
 			task.crawlGameListDispatcher()
 			task.crawlItemDetails(proto.Category_game, "div.common-item > div.content > div.title > a:nth-child(1)")
@@ -452,7 +452,7 @@ func (task *Collector) crawlItemLists(cat proto.Category, totalItems int, pageSt
 }
 
 func (task *Collector) crawlItemDetails(cat proto.Category, selector string) error {
-	q := util.NewQueue()
+	var urls []string
 	inputFileNamePattern := fmt.Sprintf("*_%s_*.html", cat)
 	files := util.GetFilePathListWithPattern(task.outputDir, inputFileNamePattern)
 	for _, fn := range files {
@@ -461,29 +461,40 @@ func (task *Collector) crawlItemDetails(cat proto.Category, selector string) err
 			log.Println("Error reading", fn, "with message", err)
 		}
 
-		// TODO: handle subject-item missing div.info issue.
 		doc.Find(selector).Each(func(_ int, sel *goquery.Selection) {
 			url, exists := sel.Attr("href")
 			if !exists {
 				log.Fatal("Found item without link", sel.Text())
 			}
-
-			// TODO: handle incremental option to check local file exists.
-			q.AddURL(url)
+			urls = append(urls, url)
 		})
 	}
 
-	size, _ := q.Size()
-	log.Println("Detail queue size is:", size)
+	// Hack around to continue progress. Set to the last downloaded progress count (1-based, 0 by default).
+	// This hack will continue with the next URL in the queue.
+	const iResume = 0
+	q := util.NewQueue()
+	for i := iResume; i < len(urls); i++ {
+		// TODO: handle incremental option to check local file exists. Also need to update the progress counter.
+		//re := regexp.MustCompile("[0-9]+")
+		//id, _ := strconv.Atoi(re.FindString(urls[i]))
+		//fileNamePattern := fmt.Sprintf("*_%s_%d.html", cat, id)
+		//fs := util.GetFilePathListWithPattern(filepath.Join(task.outputDir, util.ItemPathPrefix), fileNamePattern)
+		//if len(fs) == 0 {
+		//	log.Println("Found missing URL:", urls[i])
+		//	q.AddURL(urls[i])
+		//}
 
-	count := 1
+		q.AddURL(urls[i])
+	}
+
+	qSize, _ := q.Size()
+	log.Println("Detail queue size is:", qSize, "(out of", len(urls), "discovered URLs)")
+
+	// Reset counter (1-based).
+	count := iResume + 1
 	c := util.NewColly()
 	c.OnResponse(func(r *colly.Response) {
-		// Hack around to continue progress.
-		if count < 0 {
-			return
-		}
-
 		// Extract ID from response (using the first occurrence of number string).
 		re := regexp.MustCompile("[0-9]+")
 		id, _ := strconv.Atoi(re.FindString(r.Request.URL.String()))
@@ -496,11 +507,32 @@ func (task *Collector) crawlItemDetails(cat proto.Category, selector string) err
 		body := string(r.Body)
 		util.FailIfNeedLogin(&body)
 
-		log.Println("Progress", count, "/", size)
+		log.Println("Progress", count, "/", len(urls))
 		count++
 
 		// TODO: replace this with a proper rate limiter.
 		time.Sleep(util.RequestInterval)
+	})
+	c.OnError(func(r *colly.Response, err error) {
+		t := string(r.Body)
+		if strings.Contains(t, "页面不存在") {
+			// Deleted page... Thank you GFW!
+			// Example page: https://github.com/MewX/mewx.github.io-Generator/blob/master/data/doubak/collector/items/20221227.1551_movie_26575153.html
+			log.Println("Page deleted by Douban:", r.Request.URL)
+
+			// I still want to save a copy of this page since it's managed by version control.
+			// TODO: extract these codes to a common library.
+			// Extract ID from response (using the first occurrence of number string).
+			re := regexp.MustCompile("[0-9]+")
+			id, _ := strconv.Atoi(re.FindString(r.Request.URL.String()))
+
+			fileName := fmt.Sprintf("%s_%s_%d.html", timePrefix, cat, id)
+			if err := task.saveResponse(r, util.ItemPathPrefix+fileName); err != nil {
+				log.Println(err.Error())
+			}
+		}
+		// Still need to update the deterministic counter.
+		count++
 	})
 	return q.Run(c)
 }

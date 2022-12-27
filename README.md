@@ -30,6 +30,7 @@ One more thing, 我就特别需要标记为“不想看”的功能。
 原因有很多，比如我看了某个短片介绍，我觉得这个片子不好，标记一下雷区。这个也是刚需吧？
 反正自己来实现好了。
 
+目前本项目爬出来/处理过的数据储存在 [mewx.github.io-Generator](https://github.com/MewX/mewx.github.io-Generator/tree/master/data/doubak) 中。
 我个人会在另一个项目里使用 [Gatsby.js](https://www.gatsbyjs.org/) 用这些爬到的数据生成 self-hosted 豆瓣，托管在 GitHub Pages 上。
 当然啦， [Archive.org](http://archive.org) 会是我的另一个备份。
 

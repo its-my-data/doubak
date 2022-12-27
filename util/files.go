@@ -50,17 +50,26 @@ func ReadEntireFile(fullPath string) string {
 
 // GetFilePathListWithPattern returns the full paths for files matching the pattern in the base path.
 func GetFilePathListWithPattern(basePath, fileNamePattern string) []string {
+	sepCount := strings.Count(basePath, string(os.PathSeparator))
+
 	var files []string
 	filepath.WalkDir(basePath, func(s string, d fs.DirEntry, e error) error {
 		if e != nil {
 			return e
 		}
+
+		// Skipping sub-directories.
+		if d.IsDir() && strings.Count(s, string(os.PathSeparator)) > sepCount {
+			log.Println("Skipping sub-directory:", s)
+			return fs.SkipDir
+		}
+
 		if matched, _ := filepath.Match(fileNamePattern, d.Name()); matched {
 			files = append(files, s)
 		}
 		return nil
 	})
-	log.Println("Found", len(files), "matched files with pattern:", fileNamePattern)
+	log.Println("Found", len(files), "matched files with pattern:", fileNamePattern, "in", basePath)
 	return files
 }
 

@@ -97,7 +97,7 @@ func (task *Collector) Execute() error {
 			// TODO: collect each movie details.
 		case proto.Category_game.String():
 			task.crawlGameListDispatcher()
-			// TODO: collect each game details.
+			task.crawlItemDetails(proto.Category_game, "div.common-item > div.content > div.title > a:nth-child(1)")
 		case proto.Category_music.String():
 			task.crawlMusicListDispatcher()
 			task.crawlItemDetails(proto.Category_music, "div.item > div.info > ul > li.title > a:nth-child(1)")

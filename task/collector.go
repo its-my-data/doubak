@@ -90,8 +90,7 @@ func (task *Collector) Execute() error {
 			task.crawlBroadcastLists()
 			task.crawlBroadcastDetail()
 		case proto.Category_book.String():
-			// TODO: uncomment this.
-			//task.crawlBookListDispatcher()
+			task.crawlBookListDispatcher()
 			task.crawlItemDetails(proto.Category_book, "li.subject-item > div.info > h2 > a")
 		case proto.Category_movie.String():
 			task.crawlMovieListDispatcher()
@@ -101,7 +100,7 @@ func (task *Collector) Execute() error {
 			// TODO: collect each game details.
 		case proto.Category_music.String():
 			task.crawlMusicListDispatcher()
-			// TODO: collect each album details.
+			task.crawlItemDetails(proto.Category_music, "div.item > div.info > ul > li.title > a:nth-child(1)")
 		default:
 			return errors.New("Category not implemented " + c)
 		}

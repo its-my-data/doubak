@@ -11,6 +11,7 @@ import (
 	"log"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -452,7 +453,8 @@ func (task *Collector) crawlItemLists(cat proto.Category, totalItems int, pageSt
 }
 
 func (task *Collector) crawlItemDetails(cat proto.Category, selector string) error {
-	var urls []string
+	// Run statistical URL counter.
+	urlCounter := make(map[string]int)
 	inputFileNamePattern := fmt.Sprintf("*_%s_*.html", cat)
 	files := util.GetFilePathListWithPattern(task.outputDir, inputFileNamePattern)
 	for _, fn := range files {
@@ -466,9 +468,16 @@ func (task *Collector) crawlItemDetails(cat proto.Category, selector string) err
 			if !exists {
 				log.Fatal("Found item without link", sel.Text())
 			}
-			urls = append(urls, url)
+			urlCounter[url]++
 		})
 	}
+
+	// Convert map to sorted slices to make resuming idempotent.
+	var urls []string
+	for url := range urlCounter {
+		urls = append(urls, url)
+	}
+	sort.Strings(urls)
 
 	// Hack around to continue progress. Set to the last downloaded progress count (1-based, 0 by default).
 	// This hack will continue with the next URL in the queue.

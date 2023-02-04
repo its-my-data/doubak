@@ -28,6 +28,7 @@ const PeopleURL = DoubanURL + "people/"
 const MoviePeopleURL = MovieURL + "people/"
 const BookPeopleURL = BookURL + "people/"
 const MusicPeopleURL = MusicURL + "people/"
+const LocationPeopleURL = DoubanURL + "location/people/"
 
 const startingPage = 1
 const startingItemId = 0
@@ -102,6 +103,9 @@ func (task *Collector) Execute() error {
 		case proto.Category_music.String():
 			task.crawlMusicListDispatcher()
 			task.crawlItemDetails(proto.Category_music, "div.item > div.info > ul > li.title > a:nth-child(1)")
+		case proto.Category_drama.String():
+			task.crawlDramaListDispatcher()
+			task.crawlItemDetails(proto.Category_drama, "div.item > div.info > ul > li.title > a:nth-child(1)")
 		default:
 			return errors.New("Category not implemented " + c)
 		}
@@ -410,6 +414,50 @@ func (task *Collector) crawlMusicLists(totalItems int, tag string, urlAction str
 	return task.crawlItemLists(proto.Category_music, totalItems, pageStep, tag, urlTemplate)
 }
 
+func (task *Collector) crawlDramaListDispatcher() error {
+	// The drama page does not have an entry (https://www.douban.com/location/people/<user_name>/drama/).
+	// However, each page contains the following parts:
+	// - To-watch dramas.
+	// - Watched dramas.
+
+	// Drama list starts with item ID (which is 0). Each page has 15 items. Example:
+	// https://www.douban.com/location/people/mewcatcher/drama/collect?sort=time&start=0&filter=all&mode=grid&tags_sort=count
+	nToWatch := 0
+	nWatched := 0
+	c := util.NewColly()
+	c.OnHTML("div.article > div.mod > h2", func(e *colly.HTMLElement) {
+		secText := e.Text
+		re := regexp.MustCompile("[0-9]+")
+		nParsed, _ := strconv.Atoi(re.FindString(secText))
+
+		switch {
+		case strings.Contains(secText, "想看"):
+			nToWatch = nParsed
+			log.Println("Found to-watch dramas:", nToWatch)
+		case strings.Contains(secText, "看过"):
+			nWatched = nParsed
+			log.Println("Found watched dramas:", nWatched)
+		default:
+			log.Println("Ignoring:", util.MergeSpaces(&secText))
+		}
+	})
+	c.Visit(LocationPeopleURL + task.user + "/drama/")
+
+	if err := task.crawlDramaLists(nWatched, "watched", "collect"); err != nil {
+		return err
+	}
+	if err := task.crawlDramaLists(nToWatch, "towatch", "wish"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (task *Collector) crawlDramaLists(totalItems int, tag string, urlAction string) error {
+	const pageStep = 15
+	urlTemplate := fmt.Sprintf("https://www.douban.com/location/people/%s/drama/%s?sort=time&start=%%d&filter=all&mode=grid&tags_sort=count", task.user, urlAction)
+	return task.crawlItemLists(proto.Category_drama, totalItems, pageStep, tag, urlTemplate)
+}
+
 // TODO: implement more crawlers.
 
 // crawlItemLists downloads an item list universally.
@@ -551,7 +599,7 @@ func (task *Collector) getItemMatcherPattern(cat proto.Category) string {
 	switch cat {
 	case proto.Category_book:
 		return "class=\"subject-item\""
-	case proto.Category_movie, proto.Category_music:
+	case proto.Category_movie, proto.Category_music, proto.Category_drama:
 		return "class=\"item\""
 	case proto.Category_game:
 		return "class=\"common-item\""

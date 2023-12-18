@@ -19,7 +19,7 @@ const RequestInterval = 1 * time.Second
 // TODO: add a rate limiter.
 func NewQueue() *queue.Queue {
 	q, err := queue.New(
-		1,                                           // Number of consumer threads
+		1, // Number of consumer threads
 		&queue.InMemoryQueueStorage{MaxSize: 10000}, // Use default queue storage
 	)
 	if err != nil {
@@ -42,7 +42,7 @@ func NewColly() *colly.Collector {
 
 	c := colly.NewCollector(
 		colly.MaxDepth(1),
-		colly.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"),
+		colly.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.61"),
 	)
 
 	c.OnError(func(r *colly.Response, err error) {
@@ -64,6 +64,7 @@ func NewColly() *colly.Collector {
 			r.Headers.Set("Cookie", cookies)
 		}
 
+		r.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
 		r.Headers.Set("Referer", "https://www.douban.com/")
 		r.Headers.Set("Host", "https://www.douban.com/")
 	})

@@ -13,12 +13,12 @@ option go_package = "github.com/its-my-data/doubak/proto";
 // - 游戏 game
 // - 移动应用 app
 // - 评论 review
+// - 舞台剧 drama
 // - 小组 group (not supported)
 // - 日记 note (not supported)
 // - 图片 album (not supported)
 // - 小站 site (not supported)
 // - 同城活动 activity (not supported)
-// - 舞台剧 drama (not supported)
 // - 豆品 thing (not supported)
 enum Category {
     broadcast = 0;
@@ -28,4 +28,5 @@ enum Category {
     music = 4;
     app = 5;
     review = 6;
+    drama = 7;
 }

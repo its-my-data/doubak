@@ -1,3 +1,7 @@
+**已被新项目取代，详情请前往： https://github.com/Doubak/doubak-extension**
+
+----
+
 # Doubak
 
 [![GitHub Action CI](https://github.com/its-my-data/doubak/workflows/CI/badge.svg?branch=master)](https://github.com/its-my-data/doubak/actions?query=workflow%3ACI)

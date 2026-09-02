@@ -1,4 +1,4 @@
-**已被新项目取代，详情请前往： https://github.com/Doubak/doubak-extension**
+**已被新项目取代，详情请前往： [doubak.com](https://doubak.com) and [github.com/Doubak](https://github.com/Doubak/doubak-extension)**
 
 ----
 
